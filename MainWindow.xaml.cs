@@ -244,7 +244,11 @@ namespace ImageRate
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
-            if (ImageView.Source == null) return;
+            if (ImageView.Source == null)
+            {
+                Rating.Value = -1;
+                return;
+            }
 
 
             if(Rating.Value == -1)
@@ -309,6 +313,7 @@ namespace ImageRate
             if (filter > getRating())
             {
                 ImageView.Source = null;
+                Rating.Value = -1;
                 ProgressIndicator.IsActive = false;
                 HintText.Text = "Nothing to show";
             }
