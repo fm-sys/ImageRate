@@ -9,8 +9,8 @@
 
   <Identity
     Name="41a5939e-2a91-4ff7-a5fa-c4049e66f14a"
-    Publisher="CN=teasc"
-    Version="1.0.0.0" />
+    Publisher="CN=fm-sys"
+    Version="1.0.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="41a5939e-2a91-4ff7-a5fa-c4049e66f14a" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

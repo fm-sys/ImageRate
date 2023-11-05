@@ -46,7 +46,7 @@
                 <x:String>= 5 stars</x:String>
             </ComboBox>
 
-            <HyperlinkButton x:Name="About" Content="About this App" NavigateUri="http://www.example.com" Margin="10,0,16,0" RelativePanel.AlignRightWithPanel="True"/>
+            <HyperlinkButton x:Name="About" Content="About this App" NavigateUri="https://github.com/fm-sys/ImageRate" Margin="10,0,16,0" RelativePanel.AlignRightWithPanel="True"/>
 
             </RelativePanel>
 
