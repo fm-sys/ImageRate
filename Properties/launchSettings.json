@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ImageRate (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ImageRate (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
