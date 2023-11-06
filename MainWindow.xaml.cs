@@ -23,6 +23,7 @@ using Windows.Storage.FileProperties;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using static System.Net.Mime.MediaTypeNames;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -36,7 +37,7 @@ namespace ImageRate
     {
 
         IReadOnlyList<StorageFile> files = null;
-        int index = -1;
+        int lastIndex = -1;
         int filter = 0;
 
         public MainWindow()
@@ -127,7 +128,7 @@ namespace ImageRate
                 ProgressIndicator.IsActive = true;
                 HintText.Text = "";
                 files = await folder.GetFilesAsync();
-                index = -1;
+                lastIndex = -1;
                 loadNextImg();
             }
             else
@@ -146,65 +147,90 @@ namespace ImageRate
             loadNextImg();
         }
 
-        private void loadNextImg()
+        private async Task loadNextImg()
         {
-            bool searching = true;
-            int lastIndex = index;
-            while (searching)
+
+            bool result = await Task.Run(() => searchNextImg());
+            if (result)
+            {
+                loadImg();
+            }
+
+            
+        }
+
+        private bool searchNextImg()
+        {
+            int filter_cached = filter;
+            int index = lastIndex;
+            while (true)
             {
                 index += 1;
                 if (files == null || index >= files.Count)
                 {
-                    searching = false;
-                    index = lastIndex;
-;
-                    return;
+                    return false;
                 }
                 else
                 {
+                    if (filter_cached != filter) return false;
+
                     if (files[index].ContentType.StartsWith("image/"))
                     {
-                        if (getRating() >= filter)
+                        if (getRating(index) >= filter_cached)
                         {
-                            loadImg();
-                            searching = false;
+                            lastIndex = index;
+                            return true;
                         }
                     }
                 }
             }
         }
 
-        private void loadPrevImg()
+        private async Task loadPrevImg()
         {
-            bool searching = true;
-            int lastIndex = index;
-            while (searching)
+            bool result = await Task.Run(() => searchPrevImg());
+            if (result)
+            {
+                loadImg();
+            }
+        }
+
+        private bool searchPrevImg()
+        {
+            int filter_cached = filter;
+            int index = lastIndex;
+            while (true)
             {
                 index -= 1;
                 if (index < 0)
                 {
-                    searching = false;
-                    index = lastIndex;
-                    return;
+                    return false;
                 }
                 else
                 {
+                    if (filter_cached != filter) return false;
+
                     if (files[index].ContentType.StartsWith("image/"))
                     {
-                        if (getRating() >= filter)
+                        if (getRating(index) >= filter_cached)
                         {
-                            loadImg();
-                            searching = false;
+                            lastIndex = index;
+                            return true;
                         }
                     }
                 }
             }
         }
 
-        private int getRating()
+        private int getRating(int index)
         {
 
             if(index < 0)
+            {
+                return -1;
+            }
+
+            if (!files[index].ContentType.StartsWith("image/"))
             {
                 return -1;
             }
@@ -222,14 +248,14 @@ namespace ImageRate
         private void loadImg()
         {
 
-            if (index < 0)
+            if (lastIndex < 0)
             {
                 return;
             }
 
-            ImageView.Source = new BitmapImage(new Uri(files[index].Path, UriKind.Absolute));
+            ImageView.Source = new BitmapImage(new Uri(files[lastIndex].Path, UriKind.Absolute));
 
-            var rating = getRating();
+            var rating = getRating(lastIndex);
             if (rating != 0)
             {
                 Rating.Value = rating;
@@ -251,20 +277,20 @@ namespace ImageRate
 
             if(Rating.Value == -1)
             {
-                var file = ImageFile.FromFile(files[index].Path);
+                var file = ImageFile.FromFile(files[lastIndex].Path);
                 file.Properties.Remove(ExifTag.Rating);
-                file.Save(files[index].Path);
+                file.Save(files[lastIndex].Path);
             } else
             {
-                var file = ImageFile.FromFile(files[index].Path);
+                var file = ImageFile.FromFile(files[lastIndex].Path);
                 file.Properties.Set(ExifTag.Rating, (ushort)sender.Value);
-                file.Save(files[index].Path);
+                file.Save(files[lastIndex].Path);
             }
 
 
         }
 
-        private void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             string filterString = e.AddedItems[0].ToString();
             switch (filterString)
@@ -298,22 +324,26 @@ namespace ImageRate
 
             HintText.Text = "";
             ProgressIndicator.IsActive = true;
-            
-            loadImg();
-            if (filter > getRating())
+            ImageView.Source = null;
+
+
+            if (filter > getRating(lastIndex))
             {
-                loadNextImg();
+                await loadNextImg();
             }
-            if (filter > getRating())
+            if (filter > getRating(lastIndex))
             {
-                loadPrevImg();
+                await loadPrevImg();
             }
-            if (filter > getRating())
+            if (filter > getRating(lastIndex))
             {
                 ImageView.Source = null;
                 Rating.Value = -1;
                 ProgressIndicator.IsActive = false;
                 HintText.Text = "Nothing to show";
+            } else
+            {
+                loadImg();
             }
 
         }
