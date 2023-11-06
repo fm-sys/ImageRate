@@ -45,6 +45,8 @@ namespace ImageRate
             this.InitializeComponent();
 
             this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
+
+            PickFolderButton_Click(null, null);
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
