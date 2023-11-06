@@ -126,12 +126,18 @@ namespace ImageRate
             {
                 StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
                 BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
+                ImageView.Source = null;
                 PickFolderButton.Style = null;
                 ProgressIndicator.IsActive = true;
                 HintText.Text = "";
                 files = await folder.GetFilesAsync();
                 lastIndex = -1;
-                loadNextImg();
+                await loadNextImg();
+                if (lastIndex == -1)
+                {
+                    ProgressIndicator.IsActive = false;
+                    HintText.Text = "Nothing to show";
+                }
             }
             else
             {
