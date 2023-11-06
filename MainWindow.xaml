@@ -33,6 +33,8 @@
 
             <BreadcrumbBar x:Name="BreadcrumbBar" RelativePanel.RightOf="PickFolderButton" Margin="16,3,0,0"/>
 
+            <TeachingTip x:Name="RatingStoreError" Target="{x:Bind Rating}" Title="Error: Failed to store rating" />
+
             <Viewbox Height="50" RelativePanel.AlignHorizontalCenterWithPanel="True">
                 <RatingControl x:Name="Rating" AutomationProperties.Name="Simple RatingControl" ValueChanged="RatingControl_ValueChanged" IsClearEnabled="True" IsReadOnly="False" RelativePanel.AlignHorizontalCenterWithPanel="True"/>
             </Viewbox>

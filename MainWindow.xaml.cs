@@ -232,8 +232,7 @@ namespace ImageRate
 
         private int getRating(int index)
         {
-
-            if(index < 0)
+            if (index < 0)
             {
                 return -1;
             }
@@ -243,14 +242,22 @@ namespace ImageRate
                 return -1;
             }
 
-            var file = ImageFile.FromFile(files[index].Path);
-
-            var rating = file.Properties.Get<ExifUShort>(ExifTag.Rating);
-            if (rating != null)
+            try
             {
-                return rating;
+                var file = ImageFile.FromFile(files[index].Path);
+
+                var rating = file.Properties.Get<ExifUShort>(ExifTag.Rating);
+                if (rating != null)
+                {
+                    return rating;
+                }
+                return 0;
+            } catch
+            {
+                // todo: handle error case better
+                return -1;
             }
-            return 0;
+
         }
 
         private void loadImg()
@@ -282,19 +289,24 @@ namespace ImageRate
                 return;
             }
 
-
-            if(Rating.Value == -1)
+            try
             {
-                var file = ImageFile.FromFile(files[lastIndex].Path);
-                file.Properties.Remove(ExifTag.Rating);
-                file.Save(files[lastIndex].Path);
-            } else
+                if (Rating.Value == -1)
+                {
+                    var file = ImageFile.FromFile(files[lastIndex].Path);
+                    file.Properties.Remove(ExifTag.Rating);
+                    file.Save(files[lastIndex].Path);
+                }
+                else
+                {
+                    var file = ImageFile.FromFile(files[lastIndex].Path);
+                    file.Properties.Set(ExifTag.Rating, (ushort)sender.Value);
+                    file.Save(files[lastIndex].Path);
+                }
+            } catch
             {
-                var file = ImageFile.FromFile(files[lastIndex].Path);
-                file.Properties.Set(ExifTag.Rating, (ushort)sender.Value);
-                file.Save(files[lastIndex].Path);
+                RatingStoreError.IsOpen = true;
             }
-
 
         }
 
