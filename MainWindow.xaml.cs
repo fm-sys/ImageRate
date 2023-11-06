@@ -229,10 +229,8 @@ namespace ImageRate
 
             ImageView.Source = new BitmapImage(new Uri(files[index].Path, UriKind.Absolute));
 
-            var file = ImageFile.FromFile(files[index].Path);
-
-            var rating = file.Properties.Get<ExifUShort>(ExifTag.Rating);
-            if (rating != null)
+            var rating = getRating();
+            if (rating != 0)
             {
                 Rating.Value = rating;
             }
