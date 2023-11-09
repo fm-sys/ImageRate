@@ -100,6 +100,7 @@ namespace ImageRate
                 Rating.Value = 5;
                 RatingControl_ValueChanged(Rating, null);
             }
+
             //Rating.Caption = args.Key.ToString();
         }
 
@@ -161,6 +162,9 @@ namespace ImageRate
             bool result = await Task.Run(() => searchNextImg());
             if (result)
             {
+                // close possible error message
+                RatingStoreError.IsOpen = false;
+
                 loadImg();
             }
 
@@ -291,23 +295,31 @@ namespace ImageRate
 
             try
             {
-                if (Rating.Value == -1)
-                {
-                    var file = ImageFile.FromFile(files[lastIndex].Path);
-                    file.Properties.Remove(ExifTag.Rating);
-                    file.Save(files[lastIndex].Path);
-                }
-                else
-                {
-                    var file = ImageFile.FromFile(files[lastIndex].Path);
-                    file.Properties.Set(ExifTag.Rating, (ushort)sender.Value);
-                    file.Save(files[lastIndex].Path);
-                }
-            } catch
+                var rating = (int)sender.Value;
+                var task = Task.Run(async () => await storeRating(rating));
+                task.Wait();
+            }
+            catch
             {
                 RatingStoreError.IsOpen = true;
             }
 
+        }
+
+        private async Task storeRating(int rating)
+        {
+            var readstream = await files[lastIndex].OpenStreamForReadAsync();
+            var file = ImageFile.FromStream(readstream);
+            readstream.Close();
+
+            await FileIO.WriteBytesAsync(files[lastIndex], new byte[0]);
+            var stream = await files[lastIndex].OpenStreamForWriteAsync();
+
+            if (rating == -1) file.Properties.Remove(ExifTag.Rating);
+            else file.Properties.Set(ExifTag.Rating, (ushort)rating);
+            
+            file.Save(stream);
+            stream.Close();
         }
 
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
