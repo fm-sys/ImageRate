@@ -21,8 +21,12 @@
         <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <Image x:Name="ImageView" Margin="16,16,16,16" />
 
-        <Button Content="&lt;" Click="Button_Left" HorizontalAlignment="Left" Height="100" Margin="10,10,10,10" />
-        <Button Content="&gt;" Click="Button_Right" HorizontalAlignment="Right"  Height="100" Margin="10,10,10,10" />
+        <Button Content="&lt;" Click="Button_Left" HorizontalAlignment="Left" Height="100" />
+        <Button Content="&gt;" Click="Button_Right" HorizontalAlignment="Right"  Height="100" />
+
+        <InfoBar x:Name="InfoNoMoreImages" Message="Keine weiteren Bilder." >
+
+        </InfoBar>
 
 
 
@@ -31,11 +35,11 @@
 
             <Button x:Name="PickFolderButton" Style="{StaticResource AccentButtonStyle}" Content="Open a folder" Click="PickFolderButton_Click" Margin="16,0,0,0" RelativePanel.AlignLeftWithPanel="True"/>
 
-            <BreadcrumbBar x:Name="BreadcrumbBar" RelativePanel.RightOf="PickFolderButton" Margin="16,3,0,0"/>
+            <BreadcrumbBar x:Name="BreadcrumbBar" RelativePanel.RightOf="PickFolderButton" RelativePanel.LeftOf="RatingBox" Margin="16,3,0,0"/>
 
             <TeachingTip x:Name="RatingStoreError" Target="{x:Bind Rating}" Title="Error: Failed to store rating" />
 
-            <Viewbox Height="50" RelativePanel.AlignHorizontalCenterWithPanel="True">
+            <Viewbox x:Name="RatingBox" Height="50" RelativePanel.AlignHorizontalCenterWithPanel="True">
                 <RatingControl x:Name="Rating" AutomationProperties.Name="Simple RatingControl" ValueChanged="RatingControl_ValueChanged" IsClearEnabled="True" IsReadOnly="False" RelativePanel.AlignHorizontalCenterWithPanel="True"/>
             </Viewbox>
 

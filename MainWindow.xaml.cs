@@ -167,8 +167,10 @@ namespace ImageRate
 
                 loadImg();
             }
+            InfoNoMoreImages.IsOpen = !result;
 
-            
+
+
         }
 
         private bool searchNextImg()
@@ -203,8 +205,13 @@ namespace ImageRate
             bool result = await Task.Run(() => searchPrevImg());
             if (result)
             {
+                // close possible error message
+                RatingStoreError.IsOpen = false;
+
                 loadImg();
             }
+            InfoNoMoreImages.IsOpen = !result;
+
         }
 
         private bool searchPrevImg()
@@ -241,7 +248,7 @@ namespace ImageRate
                 return -1;
             }
 
-            if (!files[index].ContentType.StartsWith("image/"))
+            if (!files[index].ContentType.StartsWith("image/jpeg")) // was "image/" previously, but file formats other than jpg doesn't suport rating
             {
                 return -1;
             }
@@ -273,6 +280,7 @@ namespace ImageRate
             }
 
             ImageView.Source = new BitmapImage(new Uri(files[lastIndex].Path, UriKind.Absolute));
+            Title = $"ImageRate - {files[lastIndex].Name}";
 
             var rating = getRating(lastIndex);
             if (rating != 0)
@@ -293,33 +301,7 @@ namespace ImageRate
                 return;
             }
 
-            try
-            {
-                var rating = (int)sender.Value;
-                var task = Task.Run(async () => await storeRating(rating));
-                task.Wait();
-            }
-            catch
-            {
-                RatingStoreError.IsOpen = true;
-            }
-
-        }
-
-        private async Task storeRating(int rating)
-        {
-            var readstream = await files[lastIndex].OpenStreamForReadAsync();
-            var file = ImageFile.FromStream(readstream);
-            readstream.Close();
-
-            await FileIO.WriteBytesAsync(files[lastIndex], new byte[0]);
-            var stream = await files[lastIndex].OpenStreamForWriteAsync();
-
-            if (rating == -1) file.Properties.Remove(ExifTag.Rating);
-            else file.Properties.Set(ExifTag.Rating, (ushort)rating);
-            
-            file.Save(stream);
-            stream.Close();
+            (new ExifToolWrap.ExifToolWrapper()).StoreRating(files[lastIndex].Path, Math.Max(0, (int)sender.Value));
         }
 
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -383,6 +365,9 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
+
+
+            //Rating.Caption = (new ExifToolWrap.ExifToolWrapper()).CheckToolExists().ToString();
         }
 
     }
