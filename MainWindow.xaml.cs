@@ -24,6 +24,7 @@ using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using static System.Net.Mime.MediaTypeNames;
 using System.Threading.Tasks;
+using ExifToolWrap;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -190,7 +191,7 @@ namespace ImageRate
 
                     if (files[index].ContentType.StartsWith("image/"))
                     {
-                        if (getRating(index) >= filter_cached)
+                        if (filter_cached == 0 || getRating(index) >= filter_cached)
                         {
                             lastIndex = index;
                             return true;
@@ -231,7 +232,7 @@ namespace ImageRate
 
                     if (files[index].ContentType.StartsWith("image/"))
                     {
-                        if (getRating(index) >= filter_cached)
+                        if (filter_cached == 0 || getRating(index) >= filter_cached)
                         {
                             lastIndex = index;
                             return true;
@@ -253,7 +254,12 @@ namespace ImageRate
                 return -1;
             }
 
-            try
+            var img = new ExifToolWrapper();
+            img.Run(files[index].Path);
+            var rating = img.Find("Rating");
+            return rating == null ? 0 : int.Parse(rating?.value);
+
+            /*try
             {
                 var file = ImageFile.FromFile(files[index].Path);
 
@@ -267,7 +273,7 @@ namespace ImageRate
             {
                 // todo: handle error case better
                 return -1;
-            }
+            }*/
 
         }
 

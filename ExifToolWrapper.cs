@@ -124,21 +124,29 @@ namespace ExifToolWrap
 			return (this.Count  > 0);
 		}
 
-		public ExifTagItem Find( string tagname )
+		public ExifTagItem? Find( string tagname )
 		{            
 			  var q_items = from tagItem in this
 								where tagItem.name == tagname
-								select tagItem;  
-			  return q_items.First();                     
-		}
-		 
-		/// <summary>
-		/// This method saves EXIF data to an external file (<file>.exif). Only tags with group EXIF are saved.
-		/// </summary>
-		/// <param name="source_image">Source Image file path</param>
-		/// <param name="destination_exif_file">Destination .exif file path</param>
-		/// <returns>True if no error</returns>
-		public bool SaveExifData(string source_image, string destination_exif_file)
+								select tagItem;
+			try
+			{
+                return q_items.First();
+
+            }
+            catch
+			{
+				return null;
+			}
+        }
+
+        /// <summary>
+        /// This method saves EXIF data to an external file (<file>.exif). Only tags with group EXIF are saved.
+        /// </summary>
+        /// <param name="source_image">Source Image file path</param>
+        /// <param name="destination_exif_file">Destination .exif file path</param>
+        /// <returns>True if no error</returns>
+        public bool SaveExifData(string source_image, string destination_exif_file)
 		{ 
 			// exiftool command
 			string toolPath = GetAppPath();
