@@ -54,7 +54,7 @@ namespace ExifToolWrap
 
             string toolPath = GetAppPath();
             toolPath += "\\exiftool.exe ";
-            toolPath += $"exiftool.exe -Rating={rating} -XMP-xmp:Rating={rating} -RatingPercent= \"{path}\"";
+            toolPath += $"exiftool.exe -Rating={rating} -XMP-xmp:Rating={rating} -RatingPercent= -overwrite_original \"{path}\"";
 
             string output = "";
             

@@ -25,6 +25,7 @@ using Windows.UI.ViewManagement;
 using static System.Net.Mime.MediaTypeNames;
 using System.Threading.Tasks;
 using ExifToolWrap;
+using System.Reflection;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,6 +39,7 @@ namespace ImageRate
     {
 
         IReadOnlyList<StorageFile> files = null;
+        int[] ratings = null;
         int lastIndex = -1;
         int filter = 0;
 
@@ -133,6 +135,11 @@ namespace ImageRate
                 ProgressIndicator.IsActive = true;
                 HintText.Text = "";
                 files = await folder.GetFilesAsync();
+                ratings = new int[files.Count];
+                for (int i = 0; i < files.Count; i++)
+                {
+                    ratings[i] = -1;
+                }
                 lastIndex = -1;
                 await loadNextImg();
                 if (lastIndex == -1)
@@ -140,11 +147,24 @@ namespace ImageRate
                     ProgressIndicator.IsActive = false;
                     HintText.Text = "Nothing to show";
                 }
+                loadRatings();
             }
             else
             {
                 //dialog canceled;
             }
+        }
+
+        private void loadRatings()
+        {
+            Task.Run(() =>
+            {
+                for (int i = 0; i < files.Count; i++)
+                {
+                    getRating(i);
+                }
+            });
+
         }
 
         private void Button_Left(object sender, RoutedEventArgs e)
@@ -249,6 +269,14 @@ namespace ImageRate
                 return -1;
             }
 
+            if (ratings[index] >= 0)
+            {
+                return ratings[index];
+            }
+            {
+
+            }
+
             if (!files[index].ContentType.StartsWith("image/jpeg")) // was "image/" previously, but file formats other than jpg doesn't suport rating
             {
                 return -1;
@@ -257,7 +285,8 @@ namespace ImageRate
             var img = new ExifToolWrapper();
             img.Run(files[index].Path);
             var rating = img.Find("Rating");
-            return rating == null ? 0 : int.Parse(rating?.value);
+            ratings[index] = rating == null ? 0 : int.Parse(rating?.value);
+            return ratings[index];
 
             /*try
             {
@@ -307,7 +336,10 @@ namespace ImageRate
                 return;
             }
 
-            (new ExifToolWrap.ExifToolWrapper()).StoreRating(files[lastIndex].Path, Math.Max(0, (int)sender.Value));
+            var rating = Math.Max(0, (int)sender.Value);
+
+            ratings[lastIndex] = rating;
+            new ExifToolWrapper().StoreRating(files[lastIndex].Path, rating);
         }
 
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
