@@ -24,7 +24,6 @@ using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using static System.Net.Mime.MediaTypeNames;
 using System.Threading.Tasks;
-using ExifToolWrap;
 using System.Reflection;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -282,28 +281,14 @@ namespace ImageRate
                 return -1;
             }
 
-            var img = new ExifToolWrapper();
-            img.Run(files[index].Path);
-            var rating = img.Find("Rating");
-            ratings[index] = rating == null ? 0 : int.Parse(rating?.value);
+            Task.Run(async () =>
+            {
+                ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
+                var ratingPerc = properties.Rating;
+                ratings[index] = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
+            }).Wait();
+
             return ratings[index];
-
-            /*try
-            {
-                var file = ImageFile.FromFile(files[index].Path);
-
-                var rating = file.Properties.Get<ExifUShort>(ExifTag.Rating);
-                if (rating != null)
-                {
-                    return rating;
-                }
-                return 0;
-            } catch
-            {
-                // todo: handle error case better
-                return -1;
-            }*/
-
         }
 
         private void loadImg()
@@ -338,8 +323,24 @@ namespace ImageRate
 
             var rating = Math.Max(0, (int)sender.Value);
 
+            var ratingPerc = rating switch {
+                1 => 1,
+                2 => 25,
+                3 => 50,
+                4 => 75,
+                5 => 99,
+                _ => 0 
+            };
+
             ratings[lastIndex] = rating;
-            new ExifToolWrapper().StoreRating(files[lastIndex].Path, rating);
+
+            Task.Run(async () =>
+            {
+                ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
+                properties.Rating = (uint)ratingPerc;
+                await properties.SavePropertiesAsync();
+            }).Wait();
+
         }
 
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
