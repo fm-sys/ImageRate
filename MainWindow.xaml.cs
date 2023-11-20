@@ -9,6 +9,7 @@ using Windows.Storage;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
+using System.Reflection;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -167,7 +168,7 @@ namespace ImageRate
             if (result)
             {
                 // close possible error message
-                RatingStoreError.IsOpen = false;
+                RatingError.IsOpen = false;
 
                 loadImg();
             }
@@ -210,7 +211,7 @@ namespace ImageRate
             if (result)
             {
                 // close possible error message
-                RatingStoreError.IsOpen = false;
+                RatingError.IsOpen = false;
 
                 loadImg();
             }
@@ -260,17 +261,25 @@ namespace ImageRate
 
             }
 
-            if (!files[index].ContentType.StartsWith("image/jpeg")) // was "image/" previously, but file formats other than jpg doesn't suport rating
+            if (!files[index].ContentType.StartsWith("image/")) // "image/jpeg"? was "image/" previously, but file formats other than jpg doesn't suport rating
             {
                 return -1;
             }
 
-            Task.Run(async () =>
+            try
             {
-                ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
-                var ratingPerc = properties.Rating;
-                ratings[index] = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
-            }).Wait();
+                Task.Run(async () =>
+                {
+                    ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
+                    var ratingPerc = properties.Rating;
+                    ratings[index] = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
+                }).Wait();
+            }
+            catch
+            {
+                RatingError.Title = "Failed to read rating";
+                RatingError.IsOpen = true;
+            }
 
             return ratings[index];
         }
@@ -316,14 +325,25 @@ namespace ImageRate
                 _ => 0 
             };
 
-            ratings[lastIndex] = rating;
-
-            Task.Run(async () =>
+            try
             {
-                ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
-                properties.Rating = (uint)ratingPerc;
-                await properties.SavePropertiesAsync();
-            }).Wait();
+                Task.Run(async () =>
+                {
+                    ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
+                    properties.Rating = (uint)ratingPerc;
+                    await properties.SavePropertiesAsync();
+                }).Wait();
+                ratings[lastIndex] = rating;
+            }
+            catch
+            {
+                RatingError.Title = files[lastIndex].ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
+                RatingError.IsOpen = true;
+
+                // reseting rating to last stored rating
+                Rating.Value = ratings[lastIndex] == 0 ? -1 : ratings[lastIndex];
+            }
+
 
         }
 
