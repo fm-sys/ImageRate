@@ -105,7 +105,7 @@ namespace ImageRate
         private async void LoadPath(string path)
         {
             StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(path);
-            loadStorageFolder(folder);
+            await loadStorageFolder(folder);
         }
 
         private async void PickFolderButton_Click(object sender, RoutedEventArgs e)
@@ -113,7 +113,7 @@ namespace ImageRate
             // Clear previous returned file name, if it exists, between iterations of this scenario
 
             // Create a folder picker
-            FolderPicker openPicker = new Windows.Storage.Pickers.FolderPicker();
+            FolderPicker openPicker = new FolderPicker();
 
             // Retrieve the window handle (HWND) of the current WinUI 3 window.
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
@@ -122,14 +122,14 @@ namespace ImageRate
             WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hWnd);
 
             // Set options for your folder picker
-            openPicker.SuggestedStartLocation = PickerLocationId.Desktop;
+            openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
             openPicker.FileTypeFilter.Add("*");
 
             // Open the picker for the user to pick a folder
             StorageFolder folder = await openPicker.PickSingleFolderAsync();
             if (folder != null)
             {
-                loadStorageFolder(folder);
+                await loadStorageFolder(folder);
             }
             else
             {
@@ -137,7 +137,7 @@ namespace ImageRate
             }
         }
 
-        private async void loadStorageFolder(StorageFolder folder)
+        private async Task loadStorageFolder(StorageFolder folder)
         {
             StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
             BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
