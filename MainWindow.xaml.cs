@@ -11,6 +11,7 @@ using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
 using System.Reflection;
 using Windows.Graphics.Imaging;
+using System.Diagnostics;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -158,6 +159,16 @@ namespace ImageRate
                 HintText.Text = "Nothing to show";
             }
             loadRatings();
+        }
+
+        private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
+
+        private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer.exe", "/select," + files[lastIndex].Path);
         }
 
         private void loadRatings()

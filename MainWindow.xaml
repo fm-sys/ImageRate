@@ -16,19 +16,20 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <FlyoutBase.AttachedFlyout>
+            <MenuFlyout x:Name="ContextMenu">
+                <MenuFlyoutItem Text="Show in explorer" Click="Flyout_ShowInExplorer"/>
+            </MenuFlyout>
+        </FlyoutBase.AttachedFlyout>
 
         <ProgressRing x:Name="ProgressIndicator" IsActive="False" />
         <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        <Image x:Name="ImageView" Margin="16,16,16,16" />
+        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" />
 
         <Button Content="&lt;" Click="Button_Left" HorizontalAlignment="Left" Height="100" />
         <Button Content="&gt;" Click="Button_Right" HorizontalAlignment="Right"  Height="100" />
 
-        <InfoBar x:Name="InfoNoMoreImages" Message="Keine weiteren Bilder." >
-
-        </InfoBar>
-
-
+        <InfoBar x:Name="InfoNoMoreImages" Message="Keine weiteren Bilder." />
 
 
         <RelativePanel Grid.Row="1">
