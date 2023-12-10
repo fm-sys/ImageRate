@@ -39,8 +39,7 @@ namespace ImageRate
             int len = cmdargs.Length;
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
-                string path = cmdargs[len-1].Substring(0, cmdargs[len - 1].LastIndexOf('\\'));
-                LoadPath(path);
+                LoadPath(cmdargs[len - 1]);
             } else
             {
                 PickFolderButton_Click(null, null);
@@ -104,8 +103,18 @@ namespace ImageRate
 
         private async void LoadPath(string path)
         {
-            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(path);
+            string folderPath = path.Substring(0, path.LastIndexOf('\\'));
+            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
             await loadStorageFolder(folder);
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                if (files[i].Path == path) 
+                {
+                    lastIndex = i;
+                    loadImg();
+                }
+            }
         }
 
         private async void PickFolderButton_Click(object sender, RoutedEventArgs e)
