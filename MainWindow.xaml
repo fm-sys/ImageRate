@@ -19,6 +19,7 @@
         <FlyoutBase.AttachedFlyout>
             <MenuFlyout x:Name="ContextMenu">
                 <MenuFlyoutItem Text="Show in explorer" Click="Flyout_ShowInExplorer"/>
+                <MenuFlyoutItem Text="Open with..." Click="Flyout_OpenWith"/>
             </MenuFlyout>
         </FlyoutBase.AttachedFlyout>
 

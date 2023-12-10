@@ -171,6 +171,15 @@ namespace ImageRate
             Process.Start("explorer.exe", "/select," + files[lastIndex].Path);
         }
 
+        private void Flyout_OpenWith(object sender, RoutedEventArgs e)
+        {
+            Process proc = new Process();
+            proc.EnableRaisingEvents = false;
+            proc.StartInfo.FileName = "rundll32.exe";
+            proc.StartInfo.Arguments = "shell32,OpenAs_RunDLL " + files[lastIndex].Path;
+            proc.Start();
+        }
+
         private void loadRatings()
         {
             Task.Run(() =>
