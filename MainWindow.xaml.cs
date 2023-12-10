@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
 using System.Reflection;
+using Windows.Graphics.Imaging;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,7 +34,16 @@ namespace ImageRate
 
             this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
 
-            PickFolderButton_Click(null, null);
+            string[] cmdargs = Environment.GetCommandLineArgs();
+            int len = cmdargs.Length;
+            if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
+            {
+                string path = cmdargs[len-1].Substring(0, cmdargs[len - 1].LastIndexOf('\\'));
+                LoadPath(path);
+            } else
+            {
+                PickFolderButton_Click(null, null);
+            }
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
@@ -91,6 +101,12 @@ namespace ImageRate
             //Rating.Caption = args.Key.ToString();
         }
 
+        private async void LoadPath(string path)
+        {
+            StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(path);
+            loadStorageFolder(folder);
+        }
+
         private async void PickFolderButton_Click(object sender, RoutedEventArgs e)
         {
             // Clear previous returned file name, if it exists, between iterations of this scenario
@@ -112,31 +128,36 @@ namespace ImageRate
             StorageFolder folder = await openPicker.PickSingleFolderAsync();
             if (folder != null)
             {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
-                BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
-                ImageView.Source = null;
-                PickFolderButton.Style = null;
-                ProgressIndicator.IsActive = true;
-                HintText.Text = "";
-                files = await folder.GetFilesAsync();
-                ratings = new int[files.Count];
-                for (int i = 0; i < files.Count; i++)
-                {
-                    ratings[i] = -1;
-                }
-                lastIndex = -1;
-                await loadNextImg();
-                if (lastIndex == -1)
-                {
-                    ProgressIndicator.IsActive = false;
-                    HintText.Text = "Nothing to show";
-                }
-                loadRatings();
+                loadStorageFolder(folder);
             }
             else
             {
                 //dialog canceled;
             }
+        }
+
+        private async void loadStorageFolder(StorageFolder folder)
+        {
+            StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
+            BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
+            ImageView.Source = null;
+            PickFolderButton.Style = null;
+            ProgressIndicator.IsActive = true;
+            HintText.Text = "";
+            files = await folder.GetFilesAsync();
+            ratings = new int[files.Count];
+            for (int i = 0; i < files.Count; i++)
+            {
+                ratings[i] = -1;
+            }
+            lastIndex = -1;
+            await loadNextImg();
+            if (lastIndex == -1)
+            {
+                ProgressIndicator.IsActive = false;
+                HintText.Text = "Nothing to show";
+            }
+            loadRatings();
         }
 
         private void loadRatings()
