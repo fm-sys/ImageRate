@@ -23,7 +23,7 @@ To make working with app even more efficient, we added several keyboard shortcut
 
 |![img](/Doc/tutorial_image_1.jpg)|![img](/Doc/tutorial_image_2.jpg)|
 |-|-|
-|Image rating tags are supported in many applications. Inside Windows Explorer, you can sort and group images by rating. Just right-click in an empty space and select the "Rating" option. If "Rating" is not provided as an option, you can add it easily. (See the next step)|If "rating" is not provided as an option, select "More..." at the end of the list. You will see a long list providing all kinds of special tags. Scroll down until you find "Rating" and make sure it is checked. Exit the dialog by pressing "OK".|
+|Image rating tags are supported in many applications. Inside Windows Explorer, you can sort and group images by rating. Just right-click in an empty space and select the "Rating" option. If "Rating" is not provided as an option, you can add it easily. (See the next step)|If "rating" is not provided as an option, select "More..." at the end of the list. You will see a dialog with a long list providing all kinds of special tags. Scroll down until you find "Rating" and make sure it is checked. Exit the dialog by pressing "OK".|
 
 ### Ideas & bug reports
 
