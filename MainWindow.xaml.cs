@@ -9,9 +9,8 @@ using Windows.Storage;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
-using System.Reflection;
-using Windows.Graphics.Imaging;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -24,6 +23,16 @@ namespace ImageRate
     public sealed partial class MainWindow : Window
     {
 
+        enum ViewMode
+        {
+            SingleImage,
+            List
+        }
+
+        ViewMode currentViewMode = ViewMode.List;
+        ObservableCollection<ImageItem> listItems = new ObservableCollection<ImageItem>();
+        ObservableCollection<ImageItem> listItemsFiltered = new ObservableCollection<ImageItem>();
+
         IReadOnlyList<StorageFile> files = null;
         int[] ratings = null;
         int lastIndex = -1;
@@ -34,12 +43,14 @@ namespace ImageRate
             this.InitializeComponent();
 
             this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
+            ImagesGridView.ItemsSource = listItemsFiltered;
 
             string[] cmdargs = Environment.GetCommandLineArgs();
             int len = cmdargs.Length;
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
                 LoadPath(cmdargs[len - 1]);
+                currentViewMode = ViewMode.SingleImage;
             } else
             {
                 PickFolderButton_Click(null, null);
@@ -167,7 +178,23 @@ namespace ImageRate
                 ProgressIndicator.IsActive = false;
                 HintText.Text = "Nothing to show";
             }
-            loadRatings();
+            loadRatingsAndList();
+        }
+
+        private void updateViewMode()
+        {
+            var visibleSingleImage = currentViewMode == ViewMode.SingleImage ? Visibility.Visible : Visibility.Collapsed;
+            var visibleList = currentViewMode == ViewMode.List ? Visibility.Visible : Visibility.Collapsed;
+
+            Button_Prev.Visibility = visibleSingleImage;
+            Button_Next.Visibility = visibleSingleImage;
+            HintText.Visibility = visibleSingleImage;
+            ImageView.Visibility = visibleSingleImage;
+            ProgressIndicator.Visibility = visibleSingleImage;
+            Rating.Visibility = visibleSingleImage;
+            InfoNoMoreImages.Visibility = visibleSingleImage;
+
+            ImagesGridView.Visibility = visibleList;
         }
 
         private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e)
@@ -189,13 +216,26 @@ namespace ImageRate
             proc.Start();
         }
 
-        private void loadRatings()
+        private void loadRatingsAndList()
         {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                listItems.Clear();
+                listItemsFiltered.Clear();
+            });
             Task.Run(() =>
             {
                 for (int i = 0; i < files.Count; i++)
                 {
-                    getRating(i);
+                    var rating = getRating(i);
+                    var item = new ImageItem(files[i], rating, i);
+                    DispatcherQueue.TryEnqueue(() => {
+                        listItems.Add(item);
+                        if (filter == 0 || item.Rating >= filter)
+                        {
+                            listItemsFiltered.Add(item);
+                        }
+                        });
                 }
             });
 
@@ -303,7 +343,7 @@ namespace ImageRate
                 return -1;
             }
 
-            if (ratings[index] >= 0)
+            if (ratings.Length > index && ratings[index] >= 0)
             {
                 return ratings[index];
             }
@@ -320,7 +360,7 @@ namespace ImageRate
             {
                 Task.Run(async () =>
                 {
-                    ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
+                    ImageProperties properties = await files[index].Properties.GetImagePropertiesAsync();
                     var ratingPerc = properties.Rating;
                     ratings[index] = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
                 }).Wait();
@@ -397,6 +437,26 @@ namespace ImageRate
 
         }
 
+        private void SegmentedControl_ViewModeChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = SegmentedControl.SelectedIndex;
+            if (selected == 0)
+            {
+                currentViewMode = ViewMode.List;
+                for (int i = 0; i < listItemsFiltered.Count; i++)
+                {
+                    if (listItemsFiltered[i].Index == lastIndex)
+                    {
+                        ImagesGridView.SelectedIndex = lastIndex;
+                        ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
+                        break;
+                    }
+                }
+            }
+            if (selected == 1) currentViewMode = ViewMode.SingleImage;
+            updateViewMode();
+        }
+
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             string filterString = e.AddedItems[0].ToString();
@@ -433,6 +493,15 @@ namespace ImageRate
             ProgressIndicator.IsActive = true;
             ImageView.Source = null;
 
+            listItemsFiltered.Clear();
+            foreach (var item in listItems)
+            {
+                if (filter == 0 || item.Rating >= filter)
+                {
+                    listItemsFiltered.Add(item);
+                }
+            }
+
 
             if (filter > getRating(lastIndex))
             {
@@ -458,10 +527,59 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
-
-
-            //Rating.Caption = (new ExifToolWrap.ExifToolWrapper()).CheckToolExists().ToString();
         }
 
+        private void ImageGridView_ContainerContentChanging(object sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.InRecycleQueue)
+            {
+                var templateRoot = args.ItemContainer.ContentTemplateRoot as RelativePanel;
+                var image = templateRoot.FindName("ItemImage") as Image;
+                image.Source = null;
+            }
+
+            if (args.Phase == 0)
+            {
+                args.RegisterUpdateCallback(ShowImage);
+                args.Handled = true;
+            }
+        }
+
+        private async void ShowImage(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.Phase == 1)
+            {
+                var templateRoot = args.ItemContainer.ContentTemplateRoot as RelativePanel;
+                var image = templateRoot.FindName("ItemImage") as Image;
+                var source = templateRoot.FindName("SourceStorage") as TextBlock;
+                var item = args.Item as ImageItem;
+                source.Text = item.Source;
+
+                var thumbnail = await item.GetImageThumbnailAsync();
+
+                if (item.Source == source.Text) // workaround to check if view already got recycled
+                {
+                    image.Source = thumbnail;
+                }
+            }
+        }
+
+        private void ImagesGridView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            var item = e.ClickedItem as ImageItem;
+
+            var shouldSwitch = lastIndex == item.Index;
+
+            lastIndex = item.Index;
+            loadImg();
+
+            if (shouldSwitch)
+            {
+                currentViewMode = ViewMode.SingleImage;
+                SegmentedControl.SelectedIndex = 1;
+                updateViewMode();
+            }
+        }
     }
+
 }

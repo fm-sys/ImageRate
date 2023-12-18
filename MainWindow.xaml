@@ -6,13 +6,15 @@
     xmlns:local="using:ImageRate"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:ui="using:CommunityToolkit.WinUI"
     mc:Ignorable="d"
     Title="ImageRate">
 
 
     <Grid KeyDown="MainWindow_KeyDown">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -25,10 +27,33 @@
 
         <ProgressRing x:Name="ProgressIndicator" IsActive="False" />
         <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" />
 
-        <Button Content="&lt;" Click="Button_Left" HorizontalAlignment="Left" Height="100" />
-        <Button Content="&gt;" Click="Button_Right" HorizontalAlignment="Right"  Height="100" />
+        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" />
+        <GridView x:Name="ImagesGridView" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" Padding="10,10,10,10" Margin="0,0,0,16">
+            <GridView.ItemTemplate>
+                <DataTemplate x:DataType="local:ImageItem">
+                    <RelativePanel Width="200" Height="200">
+                        <TextBlock x:Name="SourceStorage" Visibility="Collapsed" />
+                        <Image x:Name="ItemImage"
+                                    Width="180"
+                                    Margin="10,10,10,35"
+                                    RelativePanel.AlignHorizontalCenterWithPanel="True"
+                                    RelativePanel.AlignBottomWithPanel="True"
+                                    ToolTipService.ToolTip="{x:Bind Name}"
+                                    Stretch="Uniform" />
+
+                        <RatingControl Value="{x:Bind Rating}" IsReadOnly="True" 
+                                       RelativePanel.AlignHorizontalCenterWithPanel="True"
+                                       RelativePanel.AlignBottomWithPanel="True" />
+
+                    </RelativePanel>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+        </GridView>
+
+
+        <Button x:Name="Button_Prev" Content="&lt;" Click="Button_Left" HorizontalAlignment="Left" Height="100" />
+        <Button x:Name="Button_Next" Content="&gt;" Click="Button_Right" HorizontalAlignment="Right"  Height="100" />
 
         <InfoBar x:Name="InfoNoMoreImages" Message="Keine weiteren Bilder." />
 
@@ -45,6 +70,13 @@
                 <RatingControl x:Name="Rating" AutomationProperties.Name="Simple RatingControl" ValueChanged="RatingControl_ValueChanged" IsClearEnabled="True" IsReadOnly="False" RelativePanel.AlignHorizontalCenterWithPanel="True"/>
             </Viewbox>
 
+            <controls:Segmented x:Name="SegmentedControl" SelectionChanged="SegmentedControl_ViewModeChanged" AllowFocusOnInteraction="False" SelectedIndex="0" RelativePanel.LeftOf="FilterComboBox" Margin="0,0,10,0">
+                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xF0E2;}" ToolTipService.ToolTip="List" />
+                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE91B;}" ToolTipService.ToolTip="Image" />
+                <!-- <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE740;}" ToolTipService.ToolTip="Fullscreen" /> -->
+            </controls:Segmented>
+
+
             <ComboBox x:Name="FilterComboBox" SelectionChanged="FilterComboBox_SelectionChanged" Loaded="FilterComboBox_Loaded" Width="120" RelativePanel.LeftOf="About">
                 <x:String>No Filter</x:String>
                 <x:String>≥ 1 star</x:String>
@@ -56,13 +88,13 @@
 
             <HyperlinkButton x:Name="About" Content="About this App" NavigateUri="https://github.com/fm-sys/ImageRate" Margin="10,0,16,0" RelativePanel.AlignRightWithPanel="True"/>
 
-            </RelativePanel>
+        </RelativePanel>
 
-        </Grid>
+    </Grid>
 
 
 
-   
+
 
 
 </Window>
