@@ -22,6 +22,13 @@
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <PackageCertificateKeyFile>ImageRate_TemporaryKey.pfx</PackageCertificateKeyFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Remove="Assets\FullscreenWindow.xaml" />
+    <Content Remove="Assets\FullscreenWindow.xaml.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Assets\FullscreenWindow.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -47,6 +54,11 @@
   -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Assets\FullscreenWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
   <!-- 

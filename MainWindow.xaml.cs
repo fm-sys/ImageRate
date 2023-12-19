@@ -15,6 +15,7 @@ using System.Reflection;
 using System.Threading;
 using System.ComponentModel;
 using Microsoft.UI.Windowing;
+using ImageRate.Assets;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -49,6 +50,8 @@ namespace ImageRate
         int lastIndex = -1;
         int filter = 0;
 
+        FullscreenWindow fullscreenWindow;
+
         public MainWindow()
         {
             this.InitializeComponent();
@@ -65,7 +68,6 @@ namespace ImageRate
                 PickFolderButton_Click(null, null);
             }
 
-            this.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
@@ -126,6 +128,17 @@ namespace ImageRate
             if (args.Key == Windows.System.VirtualKey.P)
             {
                 SegmentedControl.SelectedIndex = 1;
+            }
+            if (args.Key == Windows.System.VirtualKey.F11)
+            {
+                launchFullscreen();
+            }
+            if (args.Key == Windows.System.VirtualKey.Escape)
+            {
+                if (fullscreenWindow != null)
+                {
+                    fullscreenWindow.Close();
+                }
             }
 
             //Rating.Caption = args.Key.ToString();
@@ -198,6 +211,22 @@ namespace ImageRate
                 HintText.Text = "Nothing to show";
             }
             loadRatingsAndList();
+        }
+
+        private void launchFullscreen()
+        {
+            if (fullscreenWindow == null)
+            {
+                fullscreenWindow = new();
+                if (lastIndex >= 0)
+                {
+                    fullscreenWindow.SetCurrentImagePath(files[lastIndex].Path);
+                }
+                fullscreenWindow.AppWindow.Move(this.AppWindow.Position);
+                fullscreenWindow.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+                fullscreenWindow.Closed += (sender, args) => fullscreenWindow = null;
+            }
+            fullscreenWindow.Activate();
         }
 
         private void updateViewMode()
@@ -410,6 +439,11 @@ namespace ImageRate
                 return;
             }
 
+            if (fullscreenWindow != null)
+            {
+                fullscreenWindow.SetCurrentImagePath(files[lastIndex].Path);
+            }
+
             ImageView.Source = new BitmapImage(new Uri(files[lastIndex].Path, UriKind.Absolute));
             Title = $"ImageRate - {files[lastIndex].Name}";
 
@@ -613,6 +647,11 @@ namespace ImageRate
             loadImg();
 
             if (shouldSwitch) SegmentedControl.SelectedIndex = 1;
+        }
+
+        private void FullscreenButton_Click(object sender, RoutedEventArgs e)
+        {
+            launchFullscreen();
         }
     }
 

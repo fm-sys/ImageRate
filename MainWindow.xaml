@@ -76,6 +76,10 @@
                 <!-- <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE740;}" ToolTipService.ToolTip="Fullscreen" /> -->
             </controls:Segmented>
 
+            <Button RelativePanel.LeftOf="SegmentedControl" Margin="0,0,10,0" Click="FullscreenButton_Click">
+                <FontIcon Glyph="&#xE9A6;" />
+            </Button>
+
 
             <ComboBox x:Name="FilterComboBox" SelectionChanged="FilterComboBox_SelectionChanged" Loaded="FilterComboBox_Loaded" Width="120" RelativePanel.LeftOf="About">
                 <x:String>No Filter</x:String>
