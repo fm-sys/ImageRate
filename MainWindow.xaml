@@ -76,7 +76,7 @@
                 <!-- <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE740;}" ToolTipService.ToolTip="Fullscreen" /> -->
             </controls:Segmented>
 
-            <Button RelativePanel.LeftOf="SegmentedControl" Margin="0,0,10,0" Click="FullscreenButton_Click">
+            <Button RelativePanel.LeftOf="SegmentedControl" Margin="0,0,10,0" Click="FullscreenButton_Click" ToolTipService.ToolTip="Diashow mode (F11)">
                 <FontIcon Glyph="&#xE9A6;" />
             </Button>
 

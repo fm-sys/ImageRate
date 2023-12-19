@@ -219,7 +219,7 @@ namespace ImageRate
         {
             if (fullscreenWindow == null)
             {
-                fullscreenWindow = new();
+                fullscreenWindow = new(this);
                 if (lastIndex >= 0)
                 {
                     fullscreenWindow.SetCurrentImagePath(files[lastIndex].Path);
@@ -309,7 +309,7 @@ namespace ImageRate
             loadNextImg();
         }
 
-        private async Task loadNextImg()
+        public async Task loadNextImg()
         {
 
             bool result = await Task.Run(() => searchNextImg());
@@ -353,7 +353,7 @@ namespace ImageRate
             }
         }
 
-        private async Task loadPrevImg()
+        public async Task loadPrevImg()
         {
             bool result = await Task.Run(() => searchPrevImg());
             if (result)

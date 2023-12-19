@@ -25,16 +25,27 @@ namespace ImageRate.Assets
     public sealed partial class FullscreenWindow : Window
     {
         bool img_1_active = false;
+        MainWindow fromWindow;
 
-        public FullscreenWindow()
+        public FullscreenWindow(MainWindow fromWindow)
         {
             this.InitializeComponent();
 
             this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
+
+            this.fromWindow = fromWindow;
         }
 
         private void FullscreenWindow_KeyDown(object sender, KeyRoutedEventArgs args)
         {
+            if (args.Key == Windows.System.VirtualKey.Left)
+            {
+                fromWindow.loadPrevImg();
+            }
+            if (args.Key == Windows.System.VirtualKey.Right)
+            {
+                fromWindow.loadNextImg();
+            }
             if (args.Key == Windows.System.VirtualKey.Escape)
             {
                 Close();
