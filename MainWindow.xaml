@@ -62,7 +62,7 @@
 
             <Button x:Name="PickFolderButton" Style="{StaticResource AccentButtonStyle}" Content="Open a folder" Click="PickFolderButton_Click" Margin="16,0,0,0" RelativePanel.AlignLeftWithPanel="True"/>
 
-            <BreadcrumbBar x:Name="BreadcrumbBar" RelativePanel.RightOf="PickFolderButton" RelativePanel.LeftOf="RatingBox" Margin="16,3,0,0"/>
+            <BreadcrumbBar x:Name="BreadcrumbBar" ItemClicked="BreadcrumbBar_ItemClicked" RelativePanel.RightOf="PickFolderButton" RelativePanel.LeftOf="RatingBox" Margin="16,3,0,0"/>
 
             <TeachingTip x:Name="RatingError" Target="{x:Bind Rating}" Title="..." />
 

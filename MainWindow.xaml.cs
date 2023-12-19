@@ -715,5 +715,11 @@ namespace ImageRate
             e.Data.RequestedOperation = DataPackageOperation.Copy;
         }
 
+        private async void BreadcrumbBar_ItemClicked(BreadcrumbBar sender, BreadcrumbBarItemClickedEventArgs args)
+        {
+            var items = BreadcrumbBar.ItemsSource as String[];
+            var folderPath = String.Join("\\", items, 0, args.Index + 1);
+            await loadStorageFolder(await StorageFolder.GetFolderFromPathAsync(folderPath));
+        }
     }
 }
