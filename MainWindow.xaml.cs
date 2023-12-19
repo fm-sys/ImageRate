@@ -68,6 +68,8 @@ namespace ImageRate
                 PickFolderButton_Click(null, null);
             }
 
+            this.Closed += (s, a) => fullscreenWindow?.Close();
+
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
