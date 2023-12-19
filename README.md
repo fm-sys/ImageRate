@@ -19,6 +19,8 @@ To make working with app even more efficient, we added several keyboard shortcut
 - `-` - degrease rating by one
 - arrow `left`/`right` - navigate between images
 - `L`/`P` - switch between list and picture view mode
+- `F11` - launch fullscreen ("diashow") mode
+- `Esc` - exit fullscreen mode
 
 ### How to access the assigned rating outside ImageRate
 
