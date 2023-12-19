@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading;
+using System.ComponentModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,8 +33,10 @@ namespace ImageRate
         }
 
         ViewMode currentViewMode = ViewMode.SingleImage;
-        ObservableCollection<ImageItem> listItems = new ObservableCollection<ImageItem>();
-        ObservableCollection<ImageItem> listItemsFiltered = new ObservableCollection<ImageItem>();
+        List<ImageItem> listItems = new List<ImageItem>();
+
+        public ObservableCollection<ImageItem> listItemsFiltered { get; } =
+            new ObservableCollection<ImageItem>();
 
         IReadOnlyList<StorageFile> files = null;
         int[] ratings = null;
@@ -45,7 +48,6 @@ namespace ImageRate
             this.InitializeComponent();
 
             this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
-            ImagesGridView.ItemsSource = listItemsFiltered;
 
             string[] cmdargs = Environment.GetCommandLineArgs();
             int len = cmdargs.Length;
@@ -435,6 +437,15 @@ namespace ImageRate
                     await properties.SavePropertiesAsync();
                 }).Wait();
                 ratings[lastIndex] = rating;
+
+                foreach (var item in listItemsFiltered)
+                {
+                    if (item.Index == lastIndex)
+                    {
+                        item.Rating = rating;
+                        break;
+                    }
+                }
             }
             catch
             {

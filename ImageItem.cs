@@ -1,5 +1,7 @@
 ﻿using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -8,7 +10,7 @@ namespace ImageRate
 
 
 {
-    public class ImageItem
+    public class ImageItem : INotifyPropertyChanged
     {
 
         private int rating;
@@ -25,7 +27,10 @@ namespace ImageRate
         public int Rating
         {
             get { return rating == 0 ? -1 : rating; }
-            set { rating = value; }
+            set { 
+                rating = value;
+                OnPropertyChanged();
+            }
         }
 
         public int Index
@@ -36,7 +41,6 @@ namespace ImageRate
         public StorageFile File
         {
             get { return file; }
-            set { file = value; }
         }
 
         public String Source
@@ -48,9 +52,7 @@ namespace ImageRate
         {
             var bitmapImage = new BitmapImage();
 
-            // I tried to try/catch this but it didn't fix the problem: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
-            Console.WriteLine(file.Path);
-            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.PicturesView);
+            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.SingleItem);
             bitmapImage.SetSource(thumbnail);
             thumbnail.Dispose();
             
@@ -61,5 +63,16 @@ namespace ImageRate
         {
             get { return file.Name; }
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
     }
 }

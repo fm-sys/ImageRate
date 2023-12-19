@@ -29,7 +29,7 @@
         <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" />
-        <GridView x:Name="ImagesGridView" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" Padding="10,10,10,10" Margin="0,0,0,16">
+        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" Padding="10,10,10,10" Margin="0,0,0,16">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="local:ImageItem">
                     <RelativePanel Width="200" Height="200">
@@ -42,7 +42,7 @@
                                     ToolTipService.ToolTip="{x:Bind Name}"
                                     Stretch="Uniform" />
 
-                        <RatingControl Value="{x:Bind Rating}" IsReadOnly="True" 
+                        <RatingControl Value="{x:Bind Rating, Mode=OneWay}" IsReadOnly="True" 
                                        RelativePanel.AlignHorizontalCenterWithPanel="True"
                                        RelativePanel.AlignBottomWithPanel="True" />
 
