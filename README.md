@@ -18,6 +18,7 @@ To make working with app even more efficient, we added several keyboard shortcut
 - `+` - increase rating by one
 - `-` - degrease rating by one
 - arrow `left`/`right` - navigate between images
+- `L`/`P` - switch between list and picture view mode
 
 ### How to access the assigned rating outside ImageRate
 

@@ -71,8 +71,8 @@
             </Viewbox>
 
             <controls:Segmented x:Name="SegmentedControl" SelectionChanged="SegmentedControl_ViewModeChanged" AllowFocusOnInteraction="False" RelativePanel.LeftOf="FilterComboBox" Margin="0,0,10,0">
-                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xF0E2;}" ToolTipService.ToolTip="List" />
-                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE91B;}" ToolTipService.ToolTip="Image" />
+                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xF0E2;}" ToolTipService.ToolTip="List (L)" />
+                <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE91B;}" ToolTipService.ToolTip="Picture (P)" />
                 <!-- <controls:SegmentedItem Icon="{ui:FontIcon Glyph=&#xE740;}" ToolTipService.ToolTip="Fullscreen" /> -->
             </controls:Segmented>
 

@@ -14,6 +14,7 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Threading;
 using System.ComponentModel;
+using Microsoft.UI.Windowing;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -32,7 +33,12 @@ namespace ImageRate
             List
         }
 
-        ViewMode currentViewMode = ViewMode.SingleImage;
+        ViewMode currentViewMode
+        {
+            get { return SegmentedControl.SelectedIndex == 0 ? ViewMode.List : ViewMode.SingleImage; }
+        }
+
+
         List<ImageItem> listItems = new List<ImageItem>();
 
         public ObservableCollection<ImageItem> listItemsFiltered { get; } =
@@ -54,20 +60,21 @@ namespace ImageRate
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
                 LoadPath(cmdargs[len - 1]);
-                currentViewMode = ViewMode.SingleImage;
             } else
             {
                 PickFolderButton_Click(null, null);
             }
+
+            this.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
         {
-            if (args.Key == Windows.System.VirtualKey.Left)
+            if (args.Key == Windows.System.VirtualKey.Left && currentViewMode == ViewMode.SingleImage)
             {
                 loadPrevImg();
             }
-            if (args.Key == Windows.System.VirtualKey.Right)
+            if (args.Key == Windows.System.VirtualKey.Right && currentViewMode == ViewMode.SingleImage)
             {
                 loadNextImg();
             }
@@ -111,6 +118,14 @@ namespace ImageRate
             {
                 Rating.Value = 5;
                 RatingControl_ValueChanged(Rating, null);
+            }
+            if (args.Key == Windows.System.VirtualKey.L)
+            {
+                SegmentedControl.SelectedIndex = 0;
+            }
+            if (args.Key == Windows.System.VirtualKey.P)
+            {
+                SegmentedControl.SelectedIndex = 1;
             }
 
             //Rating.Caption = args.Key.ToString();
@@ -464,7 +479,6 @@ namespace ImageRate
             var selected = SegmentedControl.SelectedIndex;
             if (selected == 0)
             {
-                currentViewMode = ViewMode.List;
                 if (lastIndex >= 0)
                 {
                     for (int i = 0; i < listItemsFiltered.Count; i++)
@@ -478,7 +492,6 @@ namespace ImageRate
                     }
                 }
             }
-            if (selected == 1) currentViewMode = ViewMode.SingleImage;
             updateViewMode();
         }
 
@@ -552,9 +565,7 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
-
             SegmentedControl.SelectedIndex = 1;
-            updateViewMode();
         }
 
         private void ImageGridView_ContainerContentChanging(object sender, ContainerContentChangingEventArgs args)
@@ -601,12 +612,7 @@ namespace ImageRate
             lastIndex = item.Index;
             loadImg();
 
-            if (shouldSwitch)
-            {
-                currentViewMode = ViewMode.SingleImage;
-                SegmentedControl.SelectedIndex = 1;
-                updateViewMode();
-            }
+            if (shouldSwitch) SegmentedControl.SelectedIndex = 1;
         }
     }
 
