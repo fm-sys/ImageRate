@@ -52,7 +52,7 @@ namespace ImageRate
         {
             var bitmapImage = new BitmapImage();
 
-            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.SingleItem);
+            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.SingleItem, 180, ThumbnailOptions.ResizeThumbnail);
             bitmapImage.SetSource(thumbnail);
             thumbnail.Dispose();
             

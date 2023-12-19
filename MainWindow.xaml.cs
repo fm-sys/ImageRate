@@ -611,7 +611,7 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
-            SegmentedControl.SelectedIndex = 1;
+            SegmentedControl.SelectedIndex = 0;
         }
 
         private void ImageGridView_ContainerContentChanging(object sender, ContainerContentChangingEventArgs args)
