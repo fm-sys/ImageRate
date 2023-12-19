@@ -46,11 +46,14 @@ namespace ImageRate
 
         public async Task<BitmapImage> GetImageThumbnailAsync()
         {
-            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.PicturesView);
             var bitmapImage = new BitmapImage();
+
+            // I tried to try/catch this but it didn't fix the problem: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
+            Console.WriteLine(file.Path);
+            StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.PicturesView);
             bitmapImage.SetSource(thumbnail);
             thumbnail.Dispose();
-
+            
             return bitmapImage;
         }
 

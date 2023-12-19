@@ -11,6 +11,8 @@ using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Threading;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,7 +31,7 @@ namespace ImageRate
             List
         }
 
-        ViewMode currentViewMode = ViewMode.List;
+        ViewMode currentViewMode = ViewMode.SingleImage;
         ObservableCollection<ImageItem> listItems = new ObservableCollection<ImageItem>();
         ObservableCollection<ImageItem> listItemsFiltered = new ObservableCollection<ImageItem>();
 
@@ -225,17 +227,26 @@ namespace ImageRate
             });
             Task.Run(() =>
             {
+                Thread.Sleep(200); // nobody knows why, but this seem to fix the
+                                   // uncatchable crash while loading the thumbnail
+                                   //
+                                   // related?: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
+
+
                 for (int i = 0; i < files.Count; i++)
                 {
-                    var rating = getRating(i);
-                    var item = new ImageItem(files[i], rating, i);
-                    DispatcherQueue.TryEnqueue(() => {
-                        listItems.Add(item);
-                        if (filter == 0 || item.Rating >= filter)
-                        {
-                            listItemsFiltered.Add(item);
-                        }
+                    if (files[i].ContentType.StartsWith("image/"))
+                    {
+                        var rating = getRating(i);
+                        var item = new ImageItem(files[i], rating, i);
+                        DispatcherQueue.TryEnqueue(() => {
+                            listItems.Add(item);
+                            if (filter == 0 || item.Rating >= filter)
+                            {
+                                listItemsFiltered.Add(item);
+                            }
                         });
+                    }
                 }
             });
 
@@ -338,7 +349,7 @@ namespace ImageRate
 
         private int getRating(int index)
         {
-            if (index < 0)
+            if (index < 0 || index >= files.Count)
             {
                 return -1;
             }
@@ -351,7 +362,7 @@ namespace ImageRate
 
             }
 
-            if (!files[index].ContentType.StartsWith("image/")) // "image/jpeg"? was "image/" previously, but file formats other than jpg doesn't suport rating
+            if (!files[index].ContentType.StartsWith("image/")) // "image/jpeg"? file formats other than jpg doesn't suport rating
             {
                 return -1;
             }
@@ -443,13 +454,16 @@ namespace ImageRate
             if (selected == 0)
             {
                 currentViewMode = ViewMode.List;
-                for (int i = 0; i < listItemsFiltered.Count; i++)
+                if (lastIndex >= 0)
                 {
-                    if (listItemsFiltered[i].Index == lastIndex)
+                    for (int i = 0; i < listItemsFiltered.Count; i++)
                     {
-                        ImagesGridView.SelectedIndex = lastIndex;
-                        ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
-                        break;
+                        if (listItemsFiltered[i].Index == lastIndex)
+                        {
+                            ImagesGridView.SelectedIndex = lastIndex;
+                            ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
+                            break;
+                        }
                     }
                 }
             }
@@ -527,6 +541,9 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
+
+            SegmentedControl.SelectedIndex = 1;
+            updateViewMode();
         }
 
         private void ImageGridView_ContainerContentChanging(object sender, ContainerContentChangingEventArgs args)
