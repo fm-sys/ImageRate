@@ -16,6 +16,9 @@ using System.Threading;
 using System.ComponentModel;
 using Microsoft.UI.Windowing;
 using ImageRate.Assets;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Core;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -49,6 +52,7 @@ namespace ImageRate
         int[] ratings = null;
         int lastIndex = -1;
         int filter = 0;
+        DateTime lastItemClick = DateTime.MinValue;
 
         FullscreenWindow fullscreenWindow;
 
@@ -74,68 +78,75 @@ namespace ImageRate
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
         {
-            if (args.Key == Windows.System.VirtualKey.Left && currentViewMode == ViewMode.SingleImage)
+            if (args.Key == VirtualKey.Left && currentViewMode == ViewMode.SingleImage)
             {
                 loadPrevImg();
             }
-            if (args.Key == Windows.System.VirtualKey.Right && currentViewMode == ViewMode.SingleImage)
+            if (args.Key == VirtualKey.Right && currentViewMode == ViewMode.SingleImage)
             {
                 loadNextImg();
             }
-            if (args.Key == Windows.System.VirtualKey.Add || (int) args.Key ==  187)
+            if (args.Key == VirtualKey.Add || (int) args.Key ==  187)
             {
                 Rating.Value = Math.Min(Rating.Value + 1, 5);
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Subtract || (int) args.Key == 189)
+            if (args.Key == VirtualKey.Subtract || (int) args.Key == 189)
             {
                 if (Rating.Value == 1) Rating.Value = -1;
                 else Rating.Value -= 1;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number0 || args.Key == Windows.System.VirtualKey.NumberPad0)
+            if (args.Key == VirtualKey.Number0 || args.Key == VirtualKey.NumberPad0)
             {
                 Rating.Value = -1;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number1 || args.Key == Windows.System.VirtualKey.NumberPad1)
+            if (args.Key == VirtualKey.Number1 || args.Key == VirtualKey.NumberPad1)
             {
                 Rating.Value = 1;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number2 || args.Key == Windows.System.VirtualKey.NumberPad2)
+            if (args.Key == VirtualKey.Number2 || args.Key == VirtualKey.NumberPad2)
             {
                 Rating.Value = 2;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number3 || args.Key == Windows.System.VirtualKey.NumberPad3)
+            if (args.Key == VirtualKey.Number3 || args.Key == VirtualKey.NumberPad3)
             {
                 Rating.Value = 3;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number4 || args.Key == Windows.System.VirtualKey.NumberPad4)
+            if (args.Key == VirtualKey.Number4 || args.Key == VirtualKey.NumberPad4)
             {
                 Rating.Value = 4;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.Number5 || args.Key == Windows.System.VirtualKey.NumberPad5)
+            if (args.Key == VirtualKey.Number5 || args.Key == VirtualKey.NumberPad5)
             {
                 Rating.Value = 5;
                 RatingControl_ValueChanged(Rating, null);
             }
-            if (args.Key == Windows.System.VirtualKey.L)
+            if (args.Key == VirtualKey.L)
             {
                 SegmentedControl.SelectedIndex = 0;
             }
-            if (args.Key == Windows.System.VirtualKey.P)
+            if (args.Key == VirtualKey.P)
             {
                 SegmentedControl.SelectedIndex = 1;
             }
-            if (args.Key == Windows.System.VirtualKey.F11)
+            if (args.Key == VirtualKey.F11)
             {
                 launchFullscreen();
             }
-            if (args.Key == Windows.System.VirtualKey.Escape)
+            if (args.Key == VirtualKey.Escape)
+            {
+                if (fullscreenWindow != null)
+                {
+                    fullscreenWindow.Close();
+                }
+            }
+            if (args.Key == VirtualKey.Escape)
             {
                 if (fullscreenWindow != null)
                 {
@@ -642,18 +653,67 @@ namespace ImageRate
         {
             var item = e.ClickedItem as ImageItem;
 
-            var shouldSwitch = lastIndex == item.Index;
+            var shouldSwitch = lastIndex == item.Index && (DateTime.Now - lastItemClick).TotalMilliseconds < 750;
 
             lastIndex = item.Index;
             loadImg();
 
             if (shouldSwitch) SegmentedControl.SelectedIndex = 1;
+            else lastItemClick = DateTime.Now;
         }
 
         private void FullscreenButton_Click(object sender, RoutedEventArgs e)
         {
             launchFullscreen();
         }
-    }
 
+        private void Grid_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Link;
+            } else
+            {
+                e.AcceptedOperation = DataPackageOperation.None;
+            }
+        }
+
+        private async void Grid_Drop(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                if (items.Count > 0)
+                {
+                    var storageFile = items[0];
+                    if (storageFile.IsOfType(StorageItemTypes.Folder)) {
+                        loadStorageFolder(storageFile as StorageFolder);
+                    } else
+                    {
+                        LoadPath(storageFile.Path);
+                    }
+                }
+            }
+        }
+
+        private void ImageView_DragStarting(UIElement sender, DragStartingEventArgs args)
+        {
+            args.Data.SetStorageItems(new[] { files[lastIndex] });
+            args.Data.RequestedOperation = DataPackageOperation.Copy;
+            args.DragUI.SetContentFromDataPackage();
+        }
+
+        private void ImagesGridView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+        {
+            var storageItems = new StorageFile[e.Items.Count];
+            for (int i = 0; i < e.Items.Count; i++)
+            {
+                storageItems[i] = (e.Items[i] as ImageItem).File;
+            }
+
+            e.Data.SetStorageItems(storageItems);
+            e.Data.RequestedOperation = DataPackageOperation.Copy;
+        }
+
+    }
 }

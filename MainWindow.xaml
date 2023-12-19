@@ -12,7 +12,7 @@
     Title="ImageRate">
 
 
-    <Grid KeyDown="MainWindow_KeyDown">
+    <Grid x:Name="RootGrid" KeyDown="MainWindow_KeyDown" AllowDrop="True" DragOver="Grid_DragOver" Drop="Grid_Drop" Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
@@ -28,8 +28,8 @@
         <ProgressRing x:Name="ProgressIndicator" IsActive="False" />
         <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" />
-        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" Padding="10,10,10,10" Margin="0,0,0,16">
+        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
+        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="local:ImageItem">
                     <RelativePanel Width="200" Height="200">
