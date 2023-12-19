@@ -236,7 +236,6 @@ namespace ImageRate
 
             Button_Prev.Visibility = visibleSingleImage;
             Button_Next.Visibility = visibleSingleImage;
-            HintText.Visibility = visibleSingleImage;
             ImageView.Visibility = visibleSingleImage;
             ProgressIndicator.Visibility = visibleSingleImage;
             Rating.Visibility = visibleSingleImage;
