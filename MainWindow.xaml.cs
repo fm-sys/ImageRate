@@ -269,24 +269,14 @@ namespace ImageRate
             ImagesGridView.Visibility = visibleList;
         }
 
-        private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e)
-        {
+        private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e) => 
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
-        }
 
-        private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e)
-        {
-            Process.Start("explorer.exe", "/select," + files[lastIndex].Path);
-        }
+        private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) => 
+            ExternalActionsUtil.ShowInExplorer(files[lastIndex].Path);
 
-        private void Flyout_OpenWith(object sender, RoutedEventArgs e)
-        {
-            Process proc = new Process();
-            proc.EnableRaisingEvents = false;
-            proc.StartInfo.FileName = "rundll32.exe";
-            proc.StartInfo.Arguments = "shell32,OpenAs_RunDLL " + files[lastIndex].Path;
-            proc.Start();
-        }
+        private void Flyout_OpenWith(object sender, RoutedEventArgs e) => 
+            ExternalActionsUtil.OpenWithDialog(files[lastIndex].Path);
 
         private void loadRatingsAndList()
         {
