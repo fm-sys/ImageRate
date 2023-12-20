@@ -48,10 +48,10 @@ namespace ImageRate
         public ObservableCollection<ImageItem> listItemsFiltered { get; } =
             new ObservableCollection<ImageItem>();
 
-        IReadOnlyList<StorageFile> files = null;
-        IReadOnlyList<StorageFolder> folders = null;
-        int[] ratings = null;
-        int lastIndex = -1;
+        int itemsFilteredCurrentIndex = -1;
+
+
+        //int lastIndex = -1;
         int filter = 0;
         DateTime lastItemClick = DateTime.MinValue;
         ImageItem lastClickedItem = null;
@@ -162,17 +162,17 @@ namespace ImageRate
             //Rating.Caption = args.Key.ToString();
         }
 
-            private async void LoadImagePath(string path)
+        private async void LoadImagePath(string path)
         {
             string folderPath = path.Substring(0, path.LastIndexOf('\\'));
             StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
             await loadStorageFolder(folder);
 
-            for (int i = 0; i < files.Count; i++)
+            for (int i = 0; i < listItemsFiltered.Count; i++)
             {
-                if (files[i].Path == path) 
+                if (listItemsFiltered[i].Path == path) 
                 {
-                    lastIndex = i;
+                    itemsFilteredCurrentIndex = i;
                     loadImg();
                 }
             }
@@ -221,21 +221,44 @@ namespace ImageRate
             ImageView.Source = null;
             ProgressIndicator.IsActive = true;
             Text_NothingToShow.Visibility = Visibility.Collapsed;
-            folders = await folder.GetFoldersAsync();
-            files = await folder.GetFilesAsync();
-            ratings = new int[files.Count];
+
+            listItems.Clear();
+            listItemsFiltered.Clear();
+
+            IReadOnlyList<StorageFolder> folders = await folder.GetFoldersAsync();
+            IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
+
+            for (int i = 0; i < folders.Count; i++)
+            {
+                var item = new ImageItem(folders[i]);
+                listItems.Add(item);
+                if (filter == 0)
+                {
+                    listItemsFiltered.Add(item);
+                }
+            }
+
             for (int i = 0; i < files.Count; i++)
             {
-                ratings[i] = -1;
+                if (files[i].ContentType.StartsWith("image/"))
+                {
+                    var item = new ImageItem(files[i], i);
+                    listItems.Add(item);
+                    if (filter == 0 || item.Rating >= filter)
+                    {
+                        listItemsFiltered.Add(item);
+                    }
+                }
             }
-            lastIndex = -1;
+
+            itemsFilteredCurrentIndex = -1;
             await loadNextImg();
-            if (lastIndex == -1)
+            if (itemsFilteredCurrentIndex == -1)
             {
                 ProgressIndicator.IsActive = false;
                 if (folders.Count == 0 || filter > 0 || SegmentedControl.SelectedIndex == 1) Text_NothingToShow.Visibility = Visibility.Visible;
             }
-            loadRatingsAndList();
+
         }
 
         private void launchFullscreen()
@@ -243,9 +266,9 @@ namespace ImageRate
             if (fullscreenWindow == null)
             {
                 fullscreenWindow = new(this);
-                if (lastIndex >= 0)
+                if (itemsFilteredCurrentIndex >= 0)
                 {
-                    fullscreenWindow.SetCurrentImagePath(files[lastIndex].Path);
+                    fullscreenWindow.SetCurrentImagePath(listItemsFiltered[itemsFilteredCurrentIndex].Path);
                 }
                 fullscreenWindow.AppWindow.Move(this.AppWindow.Position);
                 fullscreenWindow.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
@@ -272,55 +295,25 @@ namespace ImageRate
         private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e) => 
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
 
-        private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) => 
-            ExternalActionsUtil.ShowInExplorer(files[lastIndex].Path);
+        private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) =>
+            ExternalActionsUtil.ShowInExplorer(listItemsFiltered[itemsFilteredCurrentIndex].Path);
 
         private void Flyout_OpenWith(object sender, RoutedEventArgs e) => 
-            ExternalActionsUtil.OpenWithDialog(files[lastIndex].Path);
+            ExternalActionsUtil.OpenWithDialog(listItemsFiltered[itemsFilteredCurrentIndex].Path);
 
-        private void loadRatingsAndList()
-        {
-            listItems.Clear();
-            listItemsFiltered.Clear();
-
-            Task.Run(() =>
-            {
-                Thread.Sleep(500); // nobody knows why, but this seem to fix the
-                                   // uncatchable crash while loading the thumbnail
-                                   //
-                                   // related?: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
-
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    for (int i = 0; i < folders.Count; i++)
-                    {
-                        var item = new ImageItem(folders[i]);
-                        listItems.Add(item);
-                        if (filter == 0)
-                        {
-                            listItemsFiltered.Add(item);
-                        }
-                    }
-                });
-
-                for (int i = 0; i < files.Count; i++)
-                {
-                    if (files[i].ContentType.StartsWith("image/"))
-                    {
-                        var rating = getRating(i);
-                        var item = new ImageItem(files[i], rating, i);
-                        DispatcherQueue.TryEnqueue(() => {
-                            listItems.Add(item);
-                            if (filter == 0 || item.Rating >= filter)
-                            {
-                                listItemsFiltered.Add(item);
-                            }
-                        });
-                    }
-                }
-            });
-
-        }
+        //private void loadRatingsAndList()
+        //{
+        //    Task.Run(() =>
+        //    {
+        //        Thread.Sleep(500); // nobody knows why, but this seem to fix the
+        //                           // uncatchable crash while loading the thumbnail
+        //                           //
+        //                           // related?: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
+        //        DispatcherQueue.TryEnqueue(() =>
+        //        {
+        //        });
+        //    });
+        //}
 
         private void Button_Left(object sender, RoutedEventArgs e)
         {
@@ -352,11 +345,11 @@ namespace ImageRate
         private bool searchNextImg()
         {
             int filter_cached = filter;
-            int index = lastIndex;
+            int index = itemsFilteredCurrentIndex;
             while (true)
             {
                 index += 1;
-                if (files == null || index >= files.Count)
+                if (index >= listItemsFiltered.Count)
                 {
                     return false;
                 }
@@ -364,13 +357,13 @@ namespace ImageRate
                 {
                     if (filter_cached != filter) return false;
 
-                    if (files[index].ContentType.StartsWith("image/"))
+                    if (!listItemsFiltered[index].IsFolder)
                     {
-                        if (filter_cached == 0 || getRating(index) >= filter_cached)
-                        {
-                            lastIndex = index;
+                        //if (filter_cached == 0 || getRating(index) >= filter_cached)
+                        //{
+                            itemsFilteredCurrentIndex = index;
                             return true;
-                        }
+                        //}
                     }
                 }
             }
@@ -393,7 +386,7 @@ namespace ImageRate
         private bool searchPrevImg()
         {
             int filter_cached = filter;
-            int index = lastIndex;
+            int index = itemsFilteredCurrentIndex;
             while (true)
             {
                 index -= 1;
@@ -405,73 +398,35 @@ namespace ImageRate
                 {
                     if (filter_cached != filter) return false;
 
-                    if (files[index].ContentType.StartsWith("image/"))
+                    if (!listItemsFiltered[index].IsFolder)
                     {
-                        if (filter_cached == 0 || getRating(index) >= filter_cached)
-                        {
-                            lastIndex = index;
+                        //if (filter_cached == 0 || getRating(index) >= filter_cached)
+                        //{
+                            itemsFilteredCurrentIndex = index;
                             return true;
-                        }
+                        //}
                     }
                 }
             }
         }
 
-        private int getRating(int index)
-        {
-            if (index < 0 || index >= files.Count)
-            {
-                return -1;
-            }
-
-            if (ratings.Length > index && ratings[index] >= 0)
-            {
-                return ratings[index];
-            }
-            {
-
-            }
-
-            if (!files[index].ContentType.StartsWith("image/")) // "image/jpeg"? file formats other than jpg doesn't suport rating
-            {
-                return -1;
-            }
-
-            try
-            {
-                Task.Run(async () =>
-                {
-                    ImageProperties properties = await files[index].Properties.GetImagePropertiesAsync();
-                    var ratingPerc = properties.Rating;
-                    ratings[index] = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
-                }).Wait();
-            }
-            catch
-            {
-                RatingError.Title = "Failed to read rating";
-                RatingError.IsOpen = true;
-            }
-
-            return ratings[index];
-        }
-
         private void loadImg()
         {
 
-            if (lastIndex < 0)
+            if (itemsFilteredCurrentIndex < 0)
             {
                 return;
             }
 
             if (fullscreenWindow != null)
             {
-                fullscreenWindow.SetCurrentImagePath(files[lastIndex].Path);
+                fullscreenWindow.SetCurrentImagePath(listItemsFiltered[itemsFilteredCurrentIndex].Path);
             }
 
-            ImageView.Source = new BitmapImage(new Uri(files[lastIndex].Path, UriKind.Absolute));
-            Title = $"ImageRate - {files[lastIndex].Name}";
+            ImageView.Source = new BitmapImage(new Uri(listItemsFiltered[itemsFilteredCurrentIndex].Path, UriKind.Absolute));
+            Title = $"ImageRate - {listItemsFiltered[itemsFilteredCurrentIndex].Name}";
 
-            var rating = getRating(lastIndex);
+            var rating = listItemsFiltered[itemsFilteredCurrentIndex].Rating;
             if (rating != 0)
             {
                 Rating.Value = rating;
@@ -484,7 +439,7 @@ namespace ImageRate
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
-            if (ImageView.Source == null || lastIndex < 0)
+            if (ImageView.Source == null || itemsFilteredCurrentIndex < 0)
             {
                 Rating.Value = -1;
                 return;
@@ -492,44 +447,18 @@ namespace ImageRate
 
             var rating = Math.Max(0, (int)sender.Value);
 
-            var ratingPerc = rating switch {
-                1 => 1,
-                2 => 25,
-                3 => 50,
-                4 => 75,
-                5 => 99,
-                _ => 0 
-            };
 
-            try
-            {
-                Task.Run(async () =>
-                {
-                    ImageProperties properties = await files[lastIndex].Properties.GetImagePropertiesAsync();
-                    properties.Rating = (uint)ratingPerc;
-                    await properties.SavePropertiesAsync();
-                }).Wait();
-                ratings[lastIndex] = rating;
 
-                foreach (var item in listItemsFiltered)
-                {
-                    if (item.Index == lastIndex)
-                    {
-                        item.Rating = rating;
-                        break;
-                    }
-                }
-            }
-            catch
+            var success = listItemsFiltered[itemsFilteredCurrentIndex].updateRating(rating);
+
+            if (!success)
             {
-                RatingError.Title = files[lastIndex].ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
+                RatingError.Title = listItemsFiltered[itemsFilteredCurrentIndex].File.ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
                 RatingError.IsOpen = true;
 
                 // reseting rating to last stored rating
-                Rating.Value = ratings[lastIndex] == 0 ? -1 : ratings[lastIndex];
+                Rating.Value = listItemsFiltered[itemsFilteredCurrentIndex].Rating;
             }
-
-
         }
 
         private void SegmentedControl_ViewModeChanged(object sender, SelectionChangedEventArgs e)
@@ -537,20 +466,13 @@ namespace ImageRate
             var selected = SegmentedControl.SelectedIndex;
             if (selected == 0)
             {
-                if (lastIndex >= 0)
+                if (itemsFilteredCurrentIndex >= 0)
                 {
-                    for (int i = 0; i < listItemsFiltered.Count; i++)
-                    {
-                        if (listItemsFiltered[i].Index == lastIndex)
-                        {
-                            ImagesGridView.SelectedIndex = lastIndex;
-                            ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
-                            break;
-                        }
-                    }
+                    ImagesGridView.SelectedIndex = itemsFilteredCurrentIndex;
+                    ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
                 }
             }
-            if (lastIndex == -1 && listItemsFiltered.Count > 0)
+            if (itemsFilteredCurrentIndex == -1 && listItemsFiltered.Count > 0)
             {
                 Text_NothingToShow.Visibility = selected == 0 ? Visibility.Collapsed : Visibility.Visible;
             }
@@ -584,14 +506,16 @@ namespace ImageRate
                     throw new Exception($"Invalid argument: {filterString}");
             }
 
-            if(files == null)
-            {
-                return;
-            }
+            
 
             Text_NothingToShow.Visibility = Visibility.Collapsed;
             ProgressIndicator.IsActive = true;
             ImageView.Source = null;
+
+            if (itemsFilteredCurrentIndex >= 0)
+            {
+                var prefItem = listItemsFiltered[itemsFilteredCurrentIndex];
+            }
 
             listItemsFiltered.Clear();
             foreach (var item in listItems)
@@ -602,16 +526,23 @@ namespace ImageRate
                 }
             }
 
+            itemsFilteredCurrentIndex = -1;
+            await loadNextImg();
 
-            if (filter > getRating(lastIndex))
-            {
-                await loadNextImg();
-            }
-            if (filter > getRating(lastIndex))
-            {
-                await loadPrevImg();
-            }
-            if (filter > getRating(lastIndex))
+
+            //todo: keep position------------------------------------------------------------------------------  !!!
+
+
+
+            //if (filter > 0 && filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating)
+            //{
+            //    await loadNextImg();
+            //}
+            //if (filter > 0 && filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating)
+            //{
+            //    await loadPrevImg();
+            //}
+            if (filter > 0 && (itemsFilteredCurrentIndex < 0 || filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating))
             {
                 ImageView.Source = null;
                 Rating.Value = -1;
@@ -653,11 +584,11 @@ namespace ImageRate
                 var image = templateRoot.FindName("ItemImage") as Image;
                 var source = templateRoot.FindName("SourceStorage") as TextBlock;
                 var item = args.Item as ImageItem;
-                source.Text = item.Source;
+                source.Text = item.Path;
 
                 var thumbnail = await item.GetImageThumbnailAsync();
 
-                if (item.Source == source.Text) // workaround to check if view already got recycled
+                if (item.Path == source.Text) // workaround to check if view already got recycled
                 {
                     image.Source = thumbnail;
                 }
@@ -673,7 +604,7 @@ namespace ImageRate
 
             if (!item.IsFolder)
             {
-                lastIndex = item.Index;
+                itemsFilteredCurrentIndex = ImagesGridView.SelectedIndex;
                 loadImg();
             }
 
@@ -721,7 +652,7 @@ namespace ImageRate
 
         private void ImageView_DragStarting(UIElement sender, DragStartingEventArgs args)
         {
-            args.Data.SetStorageItems(new[] { files[lastIndex] });
+            args.Data.SetStorageItems(new[] { listItemsFiltered[itemsFilteredCurrentIndex].File });
             args.Data.RequestedOperation = DataPackageOperation.Copy;
             args.DragUI.SetContentFromDataPackage();
         }

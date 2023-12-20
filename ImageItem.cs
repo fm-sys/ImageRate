@@ -21,10 +21,10 @@ namespace ImageRate
         private BitmapImage cachedThumbnail;
         private bool isFolder;
 
-        public ImageItem(StorageFile file, int rating, int index)
+        public ImageItem(StorageFile file, int index)
         {
             this.file = file;
-            this.rating = rating;
+            this.rating = -1;
             this.index = index;
             this.isFolder = false;
         }
@@ -37,12 +37,61 @@ namespace ImageRate
             this.isFolder = true;
         }
 
+        private void initRatingFromStorageFile()
+        {
+            if (isFolder) return;
+
+            Task.Run(async () =>
+            {
+                ImageProperties properties = await file.Properties.GetImagePropertiesAsync();
+                var ratingPerc = properties.Rating;
+                rating = ratingPerc == 0 ? 0 : (int)Math.Round((double)ratingPerc / 25.0) + 1;
+            }).Wait();
+        }
+
+        /// <param name="newRating">the new rating 0-5</param>
+        /// <returns>true, if rating was successfully stored</returns>
+        public bool updateRating(int newRating)
+        {
+            if (isFolder) return false;
+
+            var ratingPerc = newRating switch
+            {
+                1 => 1,
+                2 => 25,
+                3 => 50,
+                4 => 75,
+                5 => 99,
+                _ => 0
+            };
+
+            try
+            {
+                Task.Run(async () =>
+                {
+                    ImageProperties properties = await file.Properties.GetImagePropertiesAsync();
+                    properties.Rating = (uint)ratingPerc;
+                    await properties.SavePropertiesAsync();
+                }).Wait();
+                rating = newRating;
+                OnPropertyChanged();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+
+        }
+
         public int Rating
         {
-            get { return rating == 0 ? -1 : rating; }
-            set { 
-                rating = value;
-                OnPropertyChanged();
+            get { 
+                if (rating == -1)
+                {
+                    initRatingFromStorageFile();
+                }
+                return rating == 0 ? -1 : rating; 
             }
         }
 
@@ -61,7 +110,7 @@ namespace ImageRate
             get { return folder; }
         }
 
-        public String Source
+        public String Path
         {
             get { 
                 if (isFolder)
