@@ -220,7 +220,7 @@ namespace ImageRate
             }
             ImageView.Source = null;
             ProgressIndicator.IsActive = true;
-            HintText.Text = "";
+            Text_NothingToShow.Visibility = Visibility.Collapsed;
             folders = await folder.GetFoldersAsync();
             files = await folder.GetFilesAsync();
             ratings = new int[files.Count];
@@ -233,7 +233,7 @@ namespace ImageRate
             if (lastIndex == -1)
             {
                 ProgressIndicator.IsActive = false;
-                if (folders.Count == 0 || SegmentedControl.SelectedIndex == 1) HintText.Text = "Nothing to show";
+                if (folders.Count == 0 || filter > 0 || SegmentedControl.SelectedIndex == 1) Text_NothingToShow.Visibility = Visibility.Visible;
             }
             loadRatingsAndList();
         }
@@ -306,7 +306,10 @@ namespace ImageRate
                     {
                         var item = new ImageItem(folders[i]);
                         listItems.Add(item);
-                        listItemsFiltered.Add(item);
+                        if (filter == 0)
+                        {
+                            listItemsFiltered.Add(item);
+                        }
                     }
                 });
 
@@ -557,9 +560,9 @@ namespace ImageRate
                     }
                 }
             }
-            if (lastIndex == -1 && folders != null && folders.Count > 0)
+            if (lastIndex == -1 && listItemsFiltered.Count > 0)
             {
-                HintText.Text = selected == 0 ? "" : "Nothing to show";
+                Text_NothingToShow.Visibility = selected == 0 ? Visibility.Collapsed : Visibility.Visible;
             }
             updateViewMode();
         }
@@ -596,7 +599,7 @@ namespace ImageRate
                 return;
             }
 
-            HintText.Text = "";
+            Text_NothingToShow.Visibility = Visibility.Collapsed;
             ProgressIndicator.IsActive = true;
             ImageView.Source = null;
 
@@ -623,7 +626,7 @@ namespace ImageRate
                 ImageView.Source = null;
                 Rating.Value = -1;
                 ProgressIndicator.IsActive = false;
-                HintText.Text = "Nothing to show";
+                Text_NothingToShow.Visibility = Visibility.Visible;
             } else
             {
                 loadImg();

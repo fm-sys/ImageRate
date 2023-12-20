@@ -26,7 +26,7 @@
         </FlyoutBase.AttachedFlyout>
 
         <ProgressRing x:Name="ProgressIndicator" IsActive="False" />
-        <TextBlock x:Name="HintText" Text="Open a folder to start..." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <TextBlock x:Name="Text_NothingToShow" Text="Nothing to show" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
         <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
