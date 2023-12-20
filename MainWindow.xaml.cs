@@ -49,10 +49,12 @@ namespace ImageRate
             new ObservableCollection<ImageItem>();
 
         IReadOnlyList<StorageFile> files = null;
+        IReadOnlyList<StorageFolder> folders = null;
         int[] ratings = null;
         int lastIndex = -1;
         int filter = 0;
         DateTime lastItemClick = DateTime.MinValue;
+        ImageItem lastClickedItem = null;
 
         FullscreenWindow fullscreenWindow;
 
@@ -66,12 +68,12 @@ namespace ImageRate
             int len = cmdargs.Length;
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
-                LoadPath(cmdargs[len - 1]);
+                LoadImagePath(cmdargs[len - 1]);
                 SegmentedControl.SelectedIndex = 1;
             }
             else
             {
-                PickFolderButton_Click(null, null);
+                loadStorageFolder(KnownFolders.PicturesLibrary);
                 SegmentedControl.SelectedIndex = 0;
             }
 
@@ -160,7 +162,7 @@ namespace ImageRate
             //Rating.Caption = args.Key.ToString();
         }
 
-        private async void LoadPath(string path)
+            private async void LoadImagePath(string path)
         {
             string folderPath = path.Substring(0, path.LastIndexOf('\\'));
             StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
@@ -207,12 +209,19 @@ namespace ImageRate
 
         private async Task loadStorageFolder(StorageFolder folder)
         {
-            StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
-            BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
+            //StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
+            if (folder.Path == "")
+            {
+                BreadcrumbBar.ItemsSource = new[] { "Picture Library" };
+            } else
+            {
+                BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
+                PickFolderButton.Style = null;
+            }
             ImageView.Source = null;
-            PickFolderButton.Style = null;
             ProgressIndicator.IsActive = true;
             HintText.Text = "";
+            folders = await folder.GetFoldersAsync();
             files = await folder.GetFilesAsync();
             ratings = new int[files.Count];
             for (int i = 0; i < files.Count; i++)
@@ -224,7 +233,7 @@ namespace ImageRate
             if (lastIndex == -1)
             {
                 ProgressIndicator.IsActive = false;
-                HintText.Text = "Nothing to show";
+                if (folders.Count == 0 || SegmentedControl.SelectedIndex == 1) HintText.Text = "Nothing to show";
             }
             loadRatingsAndList();
         }
@@ -281,18 +290,25 @@ namespace ImageRate
 
         private void loadRatingsAndList()
         {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                listItems.Clear();
-                listItemsFiltered.Clear();
-            });
+            listItems.Clear();
+            listItemsFiltered.Clear();
+
             Task.Run(() =>
             {
-                Thread.Sleep(200); // nobody knows why, but this seem to fix the
+                Thread.Sleep(500); // nobody knows why, but this seem to fix the
                                    // uncatchable crash while loading the thumbnail
                                    //
                                    // related?: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
 
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    for (int i = 0; i < folders.Count; i++)
+                    {
+                        var item = new ImageItem(folders[i]);
+                        listItems.Add(item);
+                        listItemsFiltered.Add(item);
+                    }
+                });
 
                 for (int i = 0; i < files.Count; i++)
                 {
@@ -475,7 +491,7 @@ namespace ImageRate
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
-            if (ImageView.Source == null)
+            if (ImageView.Source == null || lastIndex < 0)
             {
                 Rating.Value = -1;
                 return;
@@ -540,6 +556,10 @@ namespace ImageRate
                         }
                     }
                 }
+            }
+            if (lastIndex == -1 && folders != null && folders.Count > 0)
+            {
+                HintText.Text = selected == 0 ? "" : "Nothing to show";
             }
             updateViewMode();
         }
@@ -655,12 +675,20 @@ namespace ImageRate
         {
             var item = e.ClickedItem as ImageItem;
 
-            var shouldSwitch = lastIndex == item.Index && (DateTime.Now - lastItemClick).TotalMilliseconds < 750;
+            var shouldSwitch = lastClickedItem == item && (DateTime.Now - lastItemClick).TotalMilliseconds < 750;
+            lastClickedItem = item;
 
-            lastIndex = item.Index;
-            loadImg();
+            if (!item.IsFolder)
+            {
+                lastIndex = item.Index;
+                loadImg();
+            }
 
-            if (shouldSwitch) SegmentedControl.SelectedIndex = 1;
+            if (shouldSwitch)
+            {
+                if (item.IsFolder) loadStorageFolder(item.Folder);
+                else SegmentedControl.SelectedIndex = 1;
+            }
             else lastItemClick = DateTime.Now;
         }
 
@@ -692,7 +720,7 @@ namespace ImageRate
                         loadStorageFolder(storageFile as StorageFolder);
                     } else
                     {
-                        LoadPath(storageFile.Path);
+                        LoadImagePath(storageFile.Path);
                     }
                 }
             }
@@ -707,10 +735,11 @@ namespace ImageRate
 
         private void ImagesGridView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
         {
-            var storageItems = new StorageFile[e.Items.Count];
+            var storageItems = new IStorageItem[e.Items.Count];
             for (int i = 0; i < e.Items.Count; i++)
             {
-                storageItems[i] = (e.Items[i] as ImageItem).File;
+                var item = (e.Items[i] as ImageItem);
+                storageItems[i] = item.IsFolder ? item.Folder : item.File;
             }
 
             e.Data.SetStorageItems(storageItems);
