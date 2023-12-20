@@ -242,7 +242,7 @@ namespace ImageRate
             {
                 if (files[i].ContentType.StartsWith("image/"))
                 {
-                    var item = new ImageItem(files[i], i);
+                    var item = new ImageItem(files[i], listItems.Count);
                     listItems.Add(item);
                     if (filter == 0 || item.Rating >= filter)
                     {
@@ -512,9 +512,10 @@ namespace ImageRate
             ProgressIndicator.IsActive = true;
             ImageView.Source = null;
 
+            var searchIndex = -1;
             if (itemsFilteredCurrentIndex >= 0)
             {
-                var prefItem = listItemsFiltered[itemsFilteredCurrentIndex];
+                searchIndex = listItemsFiltered[itemsFilteredCurrentIndex].Index;
             }
 
             listItemsFiltered.Clear();
@@ -527,21 +528,14 @@ namespace ImageRate
             }
 
             itemsFilteredCurrentIndex = -1;
-            await loadNextImg();
+            for (int i = listItemsFiltered.Count - 1; i >= 0; i--)
+            {
+                if (itemsFilteredCurrentIndex == -1 || listItemsFiltered[i].Index >= searchIndex)
+                {
+                    itemsFilteredCurrentIndex = i;
+                }
+            }
 
-
-            //todo: keep position------------------------------------------------------------------------------  !!!
-
-
-
-            //if (filter > 0 && filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating)
-            //{
-            //    await loadNextImg();
-            //}
-            //if (filter > 0 && filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating)
-            //{
-            //    await loadPrevImg();
-            //}
             if (filter > 0 && (itemsFilteredCurrentIndex < 0 || filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating))
             {
                 ImageView.Source = null;
@@ -604,7 +598,10 @@ namespace ImageRate
 
             if (!item.IsFolder)
             {
-                itemsFilteredCurrentIndex = ImagesGridView.SelectedIndex;
+                for (int i = 0; i < listItemsFiltered.Count; i++ )
+                {
+                    if (listItemsFiltered[i] == item) itemsFilteredCurrentIndex = i;
+                }
                 loadImg();
             }
 
