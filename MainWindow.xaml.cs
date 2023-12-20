@@ -67,9 +67,12 @@ namespace ImageRate
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
                 LoadPath(cmdargs[len - 1]);
-            } else
+                SegmentedControl.SelectedIndex = 1;
+            }
+            else
             {
                 PickFolderButton_Click(null, null);
+                SegmentedControl.SelectedIndex = 0;
             }
 
             this.Closed += (s, a) => fullscreenWindow?.Close();
@@ -611,7 +614,6 @@ namespace ImageRate
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
         {
             FilterComboBox.SelectedIndex = 0;
-            SegmentedControl.SelectedIndex = 0;
         }
 
         private void ImageGridView_ContainerContentChanging(object sender, ContainerContentChangingEventArgs args)

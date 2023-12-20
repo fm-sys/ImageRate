@@ -16,6 +16,7 @@ namespace ImageRate
         private int rating;
         private int index;
         private StorageFile file;
+        private BitmapImage cachedThumbnail;
 
         public ImageItem(StorageFile file, int rating, int index)
         {
@@ -50,12 +51,18 @@ namespace ImageRate
 
         public async Task<BitmapImage> GetImageThumbnailAsync()
         {
+            if (cachedThumbnail != null)
+            {
+                return cachedThumbnail;
+            }
+
             var bitmapImage = new BitmapImage();
 
             StorageItemThumbnail thumbnail = await file.GetThumbnailAsync(ThumbnailMode.SingleItem, 180, ThumbnailOptions.ResizeThumbnail);
             bitmapImage.SetSource(thumbnail);
             thumbnail.Dispose();
-            
+
+            cachedThumbnail = bitmapImage;
             return bitmapImage;
         }
 
