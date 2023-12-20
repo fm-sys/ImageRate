@@ -598,10 +598,7 @@ namespace ImageRate
 
             if (!item.IsFolder)
             {
-                for (int i = 0; i < listItemsFiltered.Count; i++ )
-                {
-                    if (listItemsFiltered[i] == item) itemsFilteredCurrentIndex = i;
-                }
+                itemsFilteredCurrentIndex = listItemsFiltered.IndexOf(item);
                 loadImg();
             }
 
