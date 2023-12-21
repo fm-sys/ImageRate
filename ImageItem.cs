@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
@@ -13,6 +14,8 @@ namespace ImageRate
 {
     public class ImageItem : INotifyPropertyChanged
     {
+
+        //private static SemaphoreSlim thumbnailIOLock = new SemaphoreSlim(1, 1); (use WaitAsync and release)
 
         private int rating;
         private int index;
@@ -87,10 +90,8 @@ namespace ImageRate
         public int Rating
         {
             get { 
-                if (rating == -1)
-                {
-                    initRatingFromStorageFile();
-                }
+                if (rating == -1) initRatingFromStorageFile();
+
                 return rating == 0 ? -1 : rating; 
             }
         }
@@ -128,13 +129,16 @@ namespace ImageRate
                 return cachedThumbnail;
             }
 
+            await Task.Delay(100); // keep this! It seems to somehow fix a race condition crash when calling GetThumbnailAsync
+
             var bitmapImage = new BitmapImage();
 
             StorageItemThumbnail thumbnail;
             if (isFolder)
             {
                 thumbnail = await folder.GetThumbnailAsync(ThumbnailMode.SingleItem, 180, ThumbnailOptions.ResizeThumbnail);
-            } else
+            } 
+            else
             {
                 thumbnail = await file.GetThumbnailAsync(ThumbnailMode.SingleItem, 180, ThumbnailOptions.ResizeThumbnail);
             }
