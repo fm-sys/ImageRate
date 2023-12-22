@@ -29,11 +29,32 @@ namespace ImageRate.Assets
 
         public FullscreenWindow(MainWindow fromWindow)
         {
-            this.InitializeComponent();
+            InitializeComponent();
 
-            this.AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
+            AppWindow.SetIcon("Assets/ImageRate_Icon.ico");
 
             this.fromWindow = fromWindow;
+
+            initMonitorFlyout();
+
+        }
+
+        private void initMonitorFlyout()
+        {
+            var areas = DisplayArea.FindAll();
+
+            for (int i = 0; i < areas.Count; i++)
+            {
+                DisplayArea item = areas[i];
+                MenuFlyoutItem menuItem = new MenuFlyoutItem();
+                menuItem.Text = $"Monitor {i + 1}";
+                if (item.IsPrimary) menuItem.Text += " (primary)";
+                MonitorSubmenu.Items.Add(menuItem);
+                menuItem.Click += (s, e) => {
+                    AppWindow.Move(new PointInt32(item.OuterBounds.X, item.OuterBounds.Y));
+                    AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+                };
+            }
         }
 
         private void FullscreenWindow_KeyDown(object sender, KeyRoutedEventArgs args)
