@@ -77,7 +77,7 @@ namespace ImageRate
                     await properties.SavePropertiesAsync();
                 }).Wait();
                 rating = newRating;
-                OnPropertyChanged();
+                OnPropertyChanged("Rating");
                 return true;
             }
             catch

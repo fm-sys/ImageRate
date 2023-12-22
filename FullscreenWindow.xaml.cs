@@ -65,5 +65,14 @@ namespace ImageRate.Assets
 
         }
 
+        private void MenuFlyoutItem_Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        private void Grid_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
     }
 }

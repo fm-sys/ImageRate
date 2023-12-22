@@ -9,7 +9,12 @@
     mc:Ignorable="d"
     Title="ImageRate diashow mode">
 
-    <Grid Background="Black" KeyDown="FullscreenWindow_KeyDown">
+    <Grid Background="Black" KeyDown="FullscreenWindow_KeyDown" RightTapped="Grid_RightTapped">
+        <FlyoutBase.AttachedFlyout>
+            <MenuFlyout x:Name="ContextMenu">
+                <MenuFlyoutItem Text="Exit fullscreen" Click="MenuFlyoutItem_Close_Click"/>
+            </MenuFlyout>
+        </FlyoutBase.AttachedFlyout>
         <Image x:Name="ImageView1" Opacity="0">
             <Image.OpacityTransition>
                 <ScalarTransition />
