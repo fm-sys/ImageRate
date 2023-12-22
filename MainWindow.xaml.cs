@@ -40,23 +40,23 @@ namespace ImageRate
         ViewMode currentViewMode
         {
             get { return SegmentedControl.SelectedIndex == 0 ? ViewMode.List : ViewMode.SingleImage; }
+            set { SegmentedControl.SelectedIndex = value == ViewMode.List ? 0 : 1; }
         }
-
 
         List<ImageItem> listItems = new List<ImageItem>();
 
         public ObservableCollection<ImageItem> listItemsFiltered { get; } =
             new ObservableCollection<ImageItem>();
 
-        int itemsFilteredCurrentIndex = -1;
+        int currentIndex = -1;
 
-
-        //int lastIndex = -1;
         int filter = 0;
+
         DateTime lastItemClick = DateTime.MinValue;
         ImageItem lastClickedItem = null;
 
         FullscreenWindow fullscreenWindow;
+
 
         public MainWindow()
         {
@@ -69,12 +69,12 @@ namespace ImageRate
             if (len > 0  && (cmdargs[len-1].ToLower().EndsWith(".jpg") || cmdargs[len - 1].ToLower().EndsWith(".jpeg")))
             {
                 LoadImagePath(cmdargs[len - 1]);
-                SegmentedControl.SelectedIndex = 1;
+                currentViewMode = ViewMode.SingleImage;
             }
             else
             {
                 loadStorageFolder(KnownFolders.PicturesLibrary);
-                SegmentedControl.SelectedIndex = 0;
+                currentViewMode = ViewMode.List;
             }
 
             this.Closed += (s, a) => fullscreenWindow?.Close();
@@ -134,11 +134,11 @@ namespace ImageRate
             }
             if (args.Key == VirtualKey.L)
             {
-                SegmentedControl.SelectedIndex = 0;
+                currentViewMode = ViewMode.List;
             }
             if (args.Key == VirtualKey.P)
             {
-                SegmentedControl.SelectedIndex = 1;
+                currentViewMode = ViewMode.SingleImage;
             }
             if (args.Key == VirtualKey.F11)
             {
@@ -172,7 +172,7 @@ namespace ImageRate
             {
                 if (listItemsFiltered[i].Path == path) 
                 {
-                    itemsFilteredCurrentIndex = i;
+                    currentIndex = i;
                     loadImg();
                 }
             }
@@ -180,22 +180,14 @@ namespace ImageRate
 
         private async void PickFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            // Clear previous returned file name, if it exists, between iterations of this scenario
-
-            // Create a folder picker
             FolderPicker openPicker = new FolderPicker();
 
-            // Retrieve the window handle (HWND) of the current WinUI 3 window.
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-
-            // Initialize the folder picker with the window handle (HWND).
             WinRT.Interop.InitializeWithWindow.Initialize(openPicker, hWnd);
 
-            // Set options for your folder picker
             openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
             openPicker.FileTypeFilter.Add("*");
 
-            // Open the picker for the user to pick a folder
             StorageFolder folder = await openPicker.PickSingleFolderAsync();
             if (folder != null)
             {
@@ -251,12 +243,12 @@ namespace ImageRate
                 }
             }
 
-            itemsFilteredCurrentIndex = -1;
+            currentIndex = -1;
             await loadNextImg();
-            if (itemsFilteredCurrentIndex == -1)
+            if (currentIndex == -1)
             {
                 ProgressIndicator.IsActive = false;
-                if (folders.Count == 0 || filter > 0 || SegmentedControl.SelectedIndex == 1) Text_NothingToShow.Visibility = Visibility.Visible;
+                if (folders.Count == 0 || filter > 0 || currentViewMode == ViewMode.SingleImage) Text_NothingToShow.Visibility = Visibility.Visible;
             }
 
         }
@@ -266,9 +258,9 @@ namespace ImageRate
             if (fullscreenWindow == null)
             {
                 fullscreenWindow = new(this);
-                if (itemsFilteredCurrentIndex >= 0)
+                if (currentIndex >= 0)
                 {
-                    fullscreenWindow.SetCurrentImagePath(listItemsFiltered[itemsFilteredCurrentIndex].Path);
+                    fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex].Path);
                 }
                 fullscreenWindow.AppWindow.Move(this.AppWindow.Position);
                 fullscreenWindow.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
@@ -296,24 +288,10 @@ namespace ImageRate
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
 
         private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) =>
-            ExternalActionsUtil.ShowInExplorer(listItemsFiltered[itemsFilteredCurrentIndex].Path);
+            ExternalActionsUtil.ShowInExplorer(listItemsFiltered[currentIndex].Path);
 
         private void Flyout_OpenWith(object sender, RoutedEventArgs e) => 
-            ExternalActionsUtil.OpenWithDialog(listItemsFiltered[itemsFilteredCurrentIndex].Path);
-
-        //private void loadRatingsAndList()
-        //{
-        //    Task.Run(() =>
-        //    {
-        //        Thread.Sleep(500); // nobody knows why, but this seem to fix the
-        //                           // uncatchable crash while loading the thumbnail
-        //                           //
-        //                           // related?: https://github.com/microsoft/microsoft-ui-xaml/issues/2386
-        //        DispatcherQueue.TryEnqueue(() =>
-        //        {
-        //        });
-        //    });
-        //}
+            ExternalActionsUtil.OpenWithDialog(listItemsFiltered[currentIndex].Path);
 
         private void Button_Left(object sender, RoutedEventArgs e)
         {
@@ -345,7 +323,7 @@ namespace ImageRate
         private bool searchNextImg()
         {
             int filter_cached = filter;
-            int index = itemsFilteredCurrentIndex;
+            int index = currentIndex;
             while (true)
             {
                 index += 1;
@@ -359,11 +337,8 @@ namespace ImageRate
 
                     if (!listItemsFiltered[index].IsFolder)
                     {
-                        //if (filter_cached == 0 || getRating(index) >= filter_cached)
-                        //{
-                            itemsFilteredCurrentIndex = index;
-                            return true;
-                        //}
+                        currentIndex = index;
+                        return true;
                     }
                 }
             }
@@ -386,7 +361,7 @@ namespace ImageRate
         private bool searchPrevImg()
         {
             int filter_cached = filter;
-            int index = itemsFilteredCurrentIndex;
+            int index = currentIndex;
             while (true)
             {
                 index -= 1;
@@ -400,11 +375,8 @@ namespace ImageRate
 
                     if (!listItemsFiltered[index].IsFolder)
                     {
-                        //if (filter_cached == 0 || getRating(index) >= filter_cached)
-                        //{
-                            itemsFilteredCurrentIndex = index;
-                            return true;
-                        //}
+                        currentIndex = index;
+                        return true;
                     }
                 }
             }
@@ -413,20 +385,20 @@ namespace ImageRate
         private void loadImg()
         {
 
-            if (itemsFilteredCurrentIndex < 0)
+            if (currentIndex < 0)
             {
                 return;
             }
 
             if (fullscreenWindow != null)
             {
-                fullscreenWindow.SetCurrentImagePath(listItemsFiltered[itemsFilteredCurrentIndex].Path);
+                fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex].Path);
             }
 
-            ImageView.Source = new BitmapImage(new Uri(listItemsFiltered[itemsFilteredCurrentIndex].Path, UriKind.Absolute));
-            Title = $"ImageRate - {listItemsFiltered[itemsFilteredCurrentIndex].Name}";
+            ImageView.Source = new BitmapImage(new Uri(listItemsFiltered[currentIndex].Path, UriKind.Absolute));
+            Title = $"ImageRate - {listItemsFiltered[currentIndex].Name}";
 
-            var rating = listItemsFiltered[itemsFilteredCurrentIndex].Rating;
+            var rating = listItemsFiltered[currentIndex].Rating;
             if (rating != 0)
             {
                 Rating.Value = rating;
@@ -439,7 +411,7 @@ namespace ImageRate
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
-            if (ImageView.Source == null || itemsFilteredCurrentIndex < 0)
+            if (ImageView.Source == null || currentIndex < 0)
             {
                 Rating.Value = -1;
                 return;
@@ -449,32 +421,31 @@ namespace ImageRate
 
 
 
-            var success = listItemsFiltered[itemsFilteredCurrentIndex].updateRating(rating);
+            var success = listItemsFiltered[currentIndex].updateRating(rating);
 
             if (!success)
             {
-                RatingError.Title = listItemsFiltered[itemsFilteredCurrentIndex].File.ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
+                RatingError.Title = listItemsFiltered[currentIndex].File.ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
                 RatingError.IsOpen = true;
 
                 // reseting rating to last stored rating
-                Rating.Value = listItemsFiltered[itemsFilteredCurrentIndex].Rating;
+                Rating.Value = listItemsFiltered[currentIndex].Rating;
             }
         }
 
         private void SegmentedControl_ViewModeChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selected = SegmentedControl.SelectedIndex;
-            if (selected == 0)
+            if (currentViewMode == ViewMode.List)
             {
-                if (itemsFilteredCurrentIndex >= 0)
+                if (currentIndex >= 0)
                 {
-                    ImagesGridView.SelectedIndex = itemsFilteredCurrentIndex;
+                    ImagesGridView.SelectedIndex = currentIndex;
                     ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
                 }
             }
-            if (itemsFilteredCurrentIndex == -1 && listItemsFiltered.Count > 0)
+            if (currentIndex == -1 && listItemsFiltered.Count > 0)
             {
-                Text_NothingToShow.Visibility = selected == 0 ? Visibility.Collapsed : Visibility.Visible;
+                Text_NothingToShow.Visibility = currentViewMode == ViewMode.List ? Visibility.Collapsed : Visibility.Visible;
             }
             updateViewMode();
         }
@@ -513,9 +484,9 @@ namespace ImageRate
             ImageView.Source = null;
 
             var searchIndex = -1;
-            if (itemsFilteredCurrentIndex >= 0)
+            if (currentIndex >= 0)
             {
-                searchIndex = listItemsFiltered[itemsFilteredCurrentIndex].Index;
+                searchIndex = listItemsFiltered[currentIndex].Index;
             }
 
             listItemsFiltered.Clear();
@@ -527,16 +498,16 @@ namespace ImageRate
                 }
             }
 
-            itemsFilteredCurrentIndex = -1;
+            currentIndex = -1;
             for (int i = listItemsFiltered.Count - 1; i >= 0; i--)
             {
-                if (itemsFilteredCurrentIndex == -1 || listItemsFiltered[i].Index >= searchIndex)
+                if (currentIndex == -1 || listItemsFiltered[i].Index >= searchIndex)
                 {
-                    itemsFilteredCurrentIndex = i;
+                    currentIndex = i;
                 }
             }
 
-            if (filter > 0 && (itemsFilteredCurrentIndex < 0 || filter > listItemsFiltered[itemsFilteredCurrentIndex].Rating))
+            if (filter > 0 && (currentIndex < 0 || filter > listItemsFiltered[currentIndex].Rating))
             {
                 ImageView.Source = null;
                 Rating.Value = -1;
@@ -565,12 +536,12 @@ namespace ImageRate
 
             if (args.Phase == 0)
             {
-                args.RegisterUpdateCallback(ShowImage);
+                args.RegisterUpdateCallback(ShowImageThumbnail);
                 args.Handled = true;
             }
         }
 
-        private async void ShowImage(ListViewBase sender, ContainerContentChangingEventArgs args)
+        private async void ShowImageThumbnail(ListViewBase sender, ContainerContentChangingEventArgs args)
         {
             if (args.Phase == 1)
             {
@@ -598,14 +569,14 @@ namespace ImageRate
 
             if (!item.IsFolder)
             {
-                itemsFilteredCurrentIndex = listItemsFiltered.IndexOf(item);
+                currentIndex = listItemsFiltered.IndexOf(item);
                 loadImg();
             }
 
             if (shouldSwitch)
             {
                 if (item.IsFolder) loadStorageFolder(item.Folder);
-                else SegmentedControl.SelectedIndex = 1;
+                else currentViewMode = ViewMode.SingleImage;
             }
             else lastItemClick = DateTime.Now;
         }
@@ -646,7 +617,7 @@ namespace ImageRate
 
         private void ImageView_DragStarting(UIElement sender, DragStartingEventArgs args)
         {
-            args.Data.SetStorageItems(new[] { listItemsFiltered[itemsFilteredCurrentIndex].File });
+            args.Data.SetStorageItems(new[] { listItemsFiltered[currentIndex].File });
             args.Data.RequestedOperation = DataPackageOperation.Copy;
             args.DragUI.SetContentFromDataPackage();
         }
