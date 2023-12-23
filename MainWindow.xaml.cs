@@ -19,6 +19,8 @@ using ImageRate.Assets;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Core;
 using Windows.System;
+using Microsoft.UI;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -79,6 +81,24 @@ namespace ImageRate
 
             this.Closed += (s, a) => fullscreenWindow?.Close();
 
+            GetAppWindowForCurrentWindow().Closing += OnClosing;
+
+        }
+
+        private AppWindow GetAppWindowForCurrentWindow()
+        {
+            IntPtr hWnd = WindowNative.GetWindowHandle(this);
+            WindowId myWndId = Win32Interop.GetWindowIdFromWindow(hWnd);
+            return AppWindow.GetFromWindowId(myWndId);
+        }
+
+        private void OnClosing(object sender, AppWindowClosingEventArgs e)
+        {
+            if (currentViewMode != ViewMode.List)
+            {
+                currentViewMode = ViewMode.List;
+                e.Cancel = true; // cancel close
+            }
         }
 
         private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs args)
@@ -501,7 +521,7 @@ namespace ImageRate
             currentIndex = -1;
             for (int i = listItemsFiltered.Count - 1; i >= 0; i--)
             {
-                if (currentIndex == -1 || listItemsFiltered[i].Index >= searchIndex)
+                if (!listItemsFiltered[i].IsFolder && (currentIndex == -1 || listItemsFiltered[i].Index >= searchIndex))
                 {
                     currentIndex = i;
                 }
