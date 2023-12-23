@@ -13,9 +13,20 @@
         <FlyoutBase.AttachedFlyout>
             <MenuFlyout x:Name="ContextMenu">
                 <MenuFlyoutSubItem x:Name="MonitorSubmenu" Text="Switch monitor"/>
-                <MenuFlyoutItem Text="Exit" Click="MenuFlyoutItem_Close_Click"/>
+                <MenuFlyoutSeparator/>
+                <ToggleMenuFlyoutItem x:Name="AutoplayToogle" Text="Autoplay" IsChecked="False" Click="MenuFlyoutItem_ToogleAutoplay">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Space" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutItem Text="Exit" Click="MenuFlyoutItem_Close_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="Escape" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
             </MenuFlyout>
         </FlyoutBase.AttachedFlyout>
+        
         <Image x:Name="ImageView1" Opacity="0">
             <Image.OpacityTransition>
                 <ScalarTransition />

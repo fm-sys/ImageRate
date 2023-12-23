@@ -180,6 +180,13 @@ namespace ImageRate
                     fullscreenWindow.Close();
                 }
             }
+            if (args.Key == VirtualKey.Space)
+            {
+                if (fullscreenWindow != null)
+                {
+                    fullscreenWindow.toggleAutoplay();
+                }
+            }
 
             //Rating.Caption = args.Key.ToString();
         }

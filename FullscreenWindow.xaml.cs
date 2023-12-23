@@ -15,6 +15,8 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
+using System.Threading.Tasks;
+using System.Threading;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -25,6 +27,7 @@ namespace ImageRate.Assets
     public sealed partial class FullscreenWindow : Window
     {
         bool img_1_active = false;
+        PeriodicTimer autoplay_timer = null;
         MainWindow fromWindow;
 
         public FullscreenWindow(MainWindow fromWindow)
@@ -36,6 +39,8 @@ namespace ImageRate.Assets
             this.fromWindow = fromWindow;
 
             initMonitorFlyout();
+
+            Closed += (o,w) => autoplay_timer?.Dispose();
 
         }
 
@@ -71,6 +76,10 @@ namespace ImageRate.Assets
             {
                 Close();
             }
+            if (args.Key == Windows.System.VirtualKey.Space)
+            {
+                toggleAutoplay();
+            }
         }
 
         public void SetCurrentImagePath(String path)
@@ -86,6 +95,31 @@ namespace ImageRate.Assets
 
         }
 
+        public void toggleAutoplay()
+        {
+            if (autoplay_timer != null)
+            {
+                autoplay_timer.Dispose();
+                autoplay_timer = null;
+                AutoplayToogle.IsChecked = false;
+            }
+            else
+            {
+                sheduleAutoplayTimer();
+                AutoplayToogle.IsChecked = true;
+            }
+        }
+
+        private async Task sheduleAutoplayTimer()
+        {
+            fromWindow.loadNextImg();
+            autoplay_timer = new PeriodicTimer(TimeSpan.FromSeconds(6));
+            while (await autoplay_timer.WaitForNextTickAsync())
+            {
+                fromWindow.loadNextImg();
+            }
+        }
+
         private void MenuFlyoutItem_Close_Click(object sender, RoutedEventArgs e)
         {
             Close();
@@ -94,6 +128,11 @@ namespace ImageRate.Assets
         private void Grid_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
+
+        private void MenuFlyoutItem_ToogleAutoplay(object sender, RoutedEventArgs e)
+        {
+            toggleAutoplay();
         }
     }
 }
