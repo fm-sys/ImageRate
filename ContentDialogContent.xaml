@@ -1,0 +1,11 @@
+<Page
+    x:Class="AppUIBasics.ControlPages.ContentDialogContent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Height="10" HorizontalAlignment="Stretch">
+        <!-- Content body -->
+        <ProgressBar Width="400" IsIndeterminate="True" ShowPaused="False" ShowError="False" />
+    </StackPanel>
+
+</Page>

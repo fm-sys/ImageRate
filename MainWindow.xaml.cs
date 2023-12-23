@@ -21,6 +21,8 @@ using Windows.UI.Core;
 using Windows.System;
 using Microsoft.UI;
 using WinRT.Interop;
+using AppUIBasics.ControlPages;
+using Microsoft.UI.Xaml.Media;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -237,8 +239,13 @@ namespace ImageRate
             listItems.Clear();
             listItemsFiltered.Clear();
 
+
+            var dialog = showWaitDialog("Load files...");
+
             IReadOnlyList<StorageFolder> folders = await folder.GetFoldersAsync();
             IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
+
+            dialog.Hide();
 
             for (int i = 0; i < folders.Count; i++)
             {
@@ -497,8 +504,8 @@ namespace ImageRate
                     throw new Exception($"Invalid argument: {filterString}");
             }
 
-            
 
+            
             Text_NothingToShow.Visibility = Visibility.Collapsed;
             ProgressIndicator.IsActive = true;
             ImageView.Source = null;
@@ -508,6 +515,18 @@ namespace ImageRate
             {
                 searchIndex = listItemsFiltered[currentIndex].Index;
             }
+
+            var dialog = showWaitDialog("Updating filter...");
+
+            await Task.Run(() =>
+            {
+                foreach (var item in listItems)
+                {
+                    var _ = item.Rating; // pre-fetch rating so UI thread operation is faster
+                }
+            });
+
+            dialog.Hide();
 
             listItemsFiltered.Clear();
             foreach (var item in listItems)
@@ -538,6 +557,18 @@ namespace ImageRate
                 loadImg();
             }
 
+        }
+
+        private ContentDialog showWaitDialog(string text)
+        {
+            ContentDialog dialog = new ContentDialog();
+            dialog.XamlRoot = Content.XamlRoot;
+            dialog.Title = text;
+            dialog.Content = new ContentDialogContent();
+
+            if (dialog.XamlRoot != null) dialog.ShowAsync(); // do not wait
+
+            return dialog;
         }
 
         private void FilterComboBox_Loaded(object sender, RoutedEventArgs e)
