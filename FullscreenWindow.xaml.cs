@@ -85,7 +85,7 @@ namespace ImageRate.Assets
         public void SetCurrentImagePath(String path)
         {
             var ToImageView = img_1_active ? ImageView2 : ImageView1;
-            var FromImageView = img_1_active ? ImageView1 : ImageView2;
+            var FromImageView = img_1_active ? ImageView1 : ImageView2; 
 
             img_1_active = !img_1_active;
 

@@ -15,7 +15,7 @@ namespace ImageRate
     public class ImageItem : INotifyPropertyChanged
     {
 
-        //private static SemaphoreSlim thumbnailIOLock = new SemaphoreSlim(1, 1); (use WaitAsync and release)
+        private static SemaphoreSlim IOWriteLock = new SemaphoreSlim(1, 1); 
 
         private int rating;
         private int index;
@@ -54,7 +54,7 @@ namespace ImageRate
 
         /// <param name="newRating">the new rating 0-5</param>
         /// <returns>true, if rating was successfully stored</returns>
-        public bool updateRating(int newRating)
+        public async Task<bool> updateRating(int newRating)
         {
             if (isFolder) return false;
 
@@ -68,22 +68,22 @@ namespace ImageRate
                 _ => 0
             };
 
+            await IOWriteLock.WaitAsync();
             try
             {
-                Task.Run(async () =>
-                {
-                    ImageProperties properties = await file.Properties.GetImagePropertiesAsync();
-                    properties.Rating = (uint)ratingPerc;
-                    await properties.SavePropertiesAsync();
-                }).Wait();
+                ImageProperties properties = await file.Properties.GetImagePropertiesAsync();
+                properties.Rating = (uint)ratingPerc;
+                await properties.SavePropertiesAsync();
+
                 rating = newRating;
                 OnPropertyChanged("Rating");
                 return true;
             }
-            catch
+            catch (Exception e)
             {
                 return false;
-            }
+            } 
+            finally { IOWriteLock.Release(); }
 
         }
 

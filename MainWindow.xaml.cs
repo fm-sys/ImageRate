@@ -443,7 +443,7 @@ namespace ImageRate
             }
         }
 
-        private void RatingControl_ValueChanged(RatingControl sender, object args)
+        private async void RatingControl_ValueChanged(RatingControl sender, object args)
         {
             if (ImageView.Source == null || currentIndex < 0)
             {
@@ -455,7 +455,7 @@ namespace ImageRate
 
 
 
-            var success = listItemsFiltered[currentIndex].updateRating(rating);
+            var success = await listItemsFiltered[currentIndex].updateRating(rating);
 
             if (!success)
             {
