@@ -571,7 +571,7 @@ namespace ImageRate
             ContentDialog dialog = new ContentDialog();
             dialog.XamlRoot = Content.XamlRoot;
             dialog.Title = text;
-            dialog.Content = new ContentDialogContent();
+            dialog.Content = new LoadDialogContent();
 
             if (dialog.XamlRoot != null) dialog.ShowAsync(); // do not wait
 

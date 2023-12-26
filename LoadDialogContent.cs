@@ -15,9 +15,9 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace AppUIBasics.ControlPages
 {
-    public sealed partial class ContentDialogContent : Page
+    public sealed partial class LoadDialogContent : Page
     {
-        public ContentDialogContent()
+        public LoadDialogContent()
         {
             this.InitializeComponent();
         }

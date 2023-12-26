@@ -17,6 +17,9 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Graphics;
 using System.Threading.Tasks;
 using System.Threading;
+using Windows.Storage;
+using AppUIBasics.ControlPages;
+using static System.Net.Mime.MediaTypeNames;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,6 +32,8 @@ namespace ImageRate.Assets
         bool img_1_active = false;
         PeriodicTimer autoplay_timer = null;
         MainWindow fromWindow;
+
+        ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
 
         public FullscreenWindow(MainWindow fromWindow)
         {
@@ -110,10 +115,46 @@ namespace ImageRate.Assets
             }
         }
 
+        private async void changeDelay()
+        {
+            ContentDialog dialog = new ContentDialog();
+            dialog.XamlRoot = Content.XamlRoot;
+            dialog.Title = "Set image duration (in seconds)";
+            dialog.CloseButtonText = "OK";
+            dialog.DefaultButton = ContentDialogButton.Close;
+            var content = new DelaySettingsDialogContent(getDelay());
+            dialog.Content = content;
+            await dialog.ShowAsync();
+
+            localSettings.Values["dia_delay"] = content.getDuration().ToString();
+
+            if (autoplay_timer != null)
+            {
+                autoplay_timer.Dispose();
+                autoplay_timer = null;
+                toggleAutoplay();
+            }
+        }
+
+        private int getDelay()
+        {
+            String delayString = localSettings.Values["dia_delay"] as string;
+            int delay;
+            int.TryParse(delayString, out delay);
+            if (delay <= 0)
+            {
+                delay = 6; // our default value
+            }
+            return delay;
+        }
+
         private async Task sheduleAutoplayTimer()
         {
             fromWindow.loadNextImg();
-            autoplay_timer = new PeriodicTimer(TimeSpan.FromSeconds(6));
+
+            
+            autoplay_timer = new PeriodicTimer(TimeSpan.FromSeconds(getDelay()));
+
             while (await autoplay_timer.WaitForNextTickAsync())
             {
                 fromWindow.loadNextImg();
@@ -133,6 +174,11 @@ namespace ImageRate.Assets
         private void MenuFlyoutItem_ToogleAutoplay(object sender, RoutedEventArgs e)
         {
             toggleAutoplay();
+        }
+
+        private void MenuFlyoutItem_ConfigureAutoplay(object sender, RoutedEventArgs e)
+        {
+            changeDelay();
         }
     }
 }

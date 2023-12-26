@@ -1,0 +1,11 @@
+<Page
+    x:Class="AppUIBasics.ControlPages.DelaySettingsDialogContent"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel Height="Auto" HorizontalAlignment="Stretch">
+        <!-- Content body -->
+        <Slider x:Name="DurationSlider" AllowFocusOnInteraction="False" Width="300" Minimum="1" Maximum="12"/>
+    </StackPanel>
+
+</Page>
