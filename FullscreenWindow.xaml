@@ -19,8 +19,7 @@
                         <KeyboardAccelerator Key="Space" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </ToggleMenuFlyoutItem>
-                <MenuFlyoutItem Text="Configure autoplay" Click="MenuFlyoutItem_ConfigureAutoplay">
-                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Configure autoplay" Click="MenuFlyoutItem_ConfigureAutoplay"/>
                 <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Exit" Click="MenuFlyoutItem_Close_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>

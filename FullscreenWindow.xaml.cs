@@ -33,8 +33,6 @@ namespace ImageRate.Assets
         PeriodicTimer autoplay_timer = null;
         MainWindow fromWindow;
 
-        ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-
         public FullscreenWindow(MainWindow fromWindow)
         {
             InitializeComponent();
@@ -126,7 +124,7 @@ namespace ImageRate.Assets
             dialog.Content = content;
             await dialog.ShowAsync();
 
-            localSettings.Values["dia_delay"] = content.getDuration().ToString();
+            SettingsHelper.set("dia_delay", content.getDuration());
 
             if (autoplay_timer != null)
             {
@@ -138,14 +136,7 @@ namespace ImageRate.Assets
 
         private int getDelay()
         {
-            String delayString = localSettings.Values["dia_delay"] as string;
-            int delay;
-            int.TryParse(delayString, out delay);
-            if (delay <= 0)
-            {
-                delay = 6; // our default value
-            }
-            return delay;
+            return SettingsHelper.getIntOrDefault("dia_delay", 6);
         }
 
         private async Task sheduleAutoplayTimer()

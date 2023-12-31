@@ -23,6 +23,7 @@ using Microsoft.UI;
 using WinRT.Interop;
 using AppUIBasics.ControlPages;
 using Microsoft.UI.Xaml.Media;
+using Windows.Storage.Search;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -84,6 +85,11 @@ namespace ImageRate
             this.Closed += (s, a) => fullscreenWindow?.Close();
 
             GetAppWindowForCurrentWindow().Closing += OnClosing;
+
+            foreach (RadioMenuFlyoutItem item in SortSubmenu.Items)
+            {
+                if (item.Tag.ToString() == SettingsHelper.getStringOrDefault("sort", "System.FileName")) item.IsChecked = true;
+            }
 
         }
 
@@ -250,7 +256,18 @@ namespace ImageRate
             var dialog = showWaitDialog("Load files...");
 
             IReadOnlyList<StorageFolder> folders = await folder.GetFoldersAsync();
-            IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
+
+            QueryOptions queryOptions = new QueryOptions(CommonFileQuery.DefaultQuery, null);
+            queryOptions.SortOrder.Clear();
+            SortEntry se = new SortEntry();
+            se.PropertyName = SettingsHelper.getStringOrDefault("sort", "System.FileName");
+            se.AscendingOrder = !(se.PropertyName == "System.Rating"); // descending order for rating, otherwise ascending.
+                                                                       // This I would consider the "natural ordering".
+                                                                       // Let's see if this works out or whether we need to make it configurable.
+            queryOptions.SortOrder.Add(se);
+
+            StorageFileQueryResult queryResult = folder.CreateFileQueryWithOptions(queryOptions);
+            IReadOnlyList<StorageFile> files = await queryResult.GetFilesAsync();
 
             dialog.Hide();
 
@@ -318,14 +335,31 @@ namespace ImageRate
             ImagesGridView.Visibility = visibleList;
         }
 
-        private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e) => 
+        private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            var fromGrid = sender is GridView;
+            foreach(var item in ContextMenu.Items)
+            {
+                if (item != SortSubmenu) item.Visibility = fromGrid ? Visibility.Collapsed : Visibility.Visible;
+            }
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
 
         private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) =>
             ExternalActionsUtil.ShowInExplorer(listItemsFiltered[currentIndex].Path);
 
         private void Flyout_OpenWith(object sender, RoutedEventArgs e) => 
             ExternalActionsUtil.OpenWithDialog(listItemsFiltered[currentIndex].Path);
+
+        private void Flyout_SortingChanged(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem selectedItem)
+            {
+                string sortOption = selectedItem.Tag.ToString();
+                SettingsHelper.set("sort", sortOption);
+                if (currentIndex >= 0) LoadImagePath(listItemsFiltered[currentIndex].Path);
+            }
+        }
 
         private void Button_Left(object sender, RoutedEventArgs e)
         {

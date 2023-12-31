@@ -22,6 +22,12 @@
             <MenuFlyout x:Name="ContextMenu">
                 <MenuFlyoutItem Text="Show in explorer" Click="Flyout_ShowInExplorer"/>
                 <MenuFlyoutItem Text="Open with..." Click="Flyout_OpenWith"/>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutSubItem Text="Sorting" x:Name="SortSubmenu">
+                    <RadioMenuFlyoutItem Text="Name" Tag="System.FileName" Click="Flyout_SortingChanged"/>
+                    <RadioMenuFlyoutItem Text="Date taken" Tag="System.ItemDate" Click="Flyout_SortingChanged"/>
+                    <RadioMenuFlyoutItem Text="Rating" Tag="System.Rating" Click="Flyout_SortingChanged"/>
+                </MenuFlyoutSubItem>
             </MenuFlyout>
         </FlyoutBase.AttachedFlyout>
 
@@ -29,7 +35,7 @@
         <TextBlock x:Name="Text_NothingToShow" Text="Nothing to show" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
-        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
+        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" RightTapped="Image_RightTapped" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="local:ImageItem">
                     <RelativePanel Width="200" Height="200">
