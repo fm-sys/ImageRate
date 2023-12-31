@@ -209,6 +209,9 @@ namespace ImageRate
                 {
                     currentIndex = i;
                     loadImg();
+
+                    ImagesGridView.SelectedIndex = currentIndex;
+                    ImagesGridView.ScrollIntoView(ImagesGridView.SelectedItem);
                 }
             }
         }
