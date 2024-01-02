@@ -24,6 +24,8 @@ using WinRT.Interop;
 using AppUIBasics.ControlPages;
 using Microsoft.UI.Xaml.Media;
 using Windows.Storage.Search;
+using System.Linq;
+using System.IO;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -205,7 +207,7 @@ namespace ImageRate
 
             for (int i = 0; i < listItemsFiltered.Count; i++)
             {
-                if (listItemsFiltered[i].Path == path) 
+                if (listItemsFiltered[i].Path == path)
                 {
                     currentIndex = i;
                     loadImg();
@@ -239,7 +241,7 @@ namespace ImageRate
 
         private async Task loadStorageFolder(StorageFolder folder)
         {
-            //StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
+            StorageApplicationPermissions.FutureAccessList.AddOrReplace("PickedFolderToken", folder);
             if (folder.Path == "")
             {
                 BreadcrumbBar.ItemsSource = new[] { "Picture Library" };
@@ -259,24 +261,32 @@ namespace ImageRate
             var dialog = showWaitDialog("Load files...");
 
             IReadOnlyList<StorageFolder> folders = await folder.GetFoldersAsync();
-
-            QueryOptions queryOptions = new QueryOptions(CommonFileQuery.DefaultQuery, null);
-            queryOptions.SortOrder.Clear();
-            SortEntry se = new SortEntry();
-            se.PropertyName = SettingsHelper.getStringOrDefault("sort", "System.FileName");
-            se.AscendingOrder = !(se.PropertyName == "System.Rating"); // descending order for rating, otherwise ascending.
-                                                                       // This I would consider the "natural ordering".
-                                                                       // Let's see if this works out or whether we need to make it configurable.
-            queryOptions.SortOrder.Add(se);
-
-            StorageFileQueryResult queryResult = folder.CreateFileQueryWithOptions(queryOptions);
-            IReadOnlyList<StorageFile> files = await queryResult.GetFilesAsync();
+            IReadOnlyList<StorageFile> files = await folder.GetFilesAsync();
 
             dialog.Hide();
 
-            for (int i = 0; i < folders.Count; i++)
+            var tempList = new List<ImageItem>();
+            for (int i = 0; i < files.Count; i++)
             {
-                var item = new ImageItem(folders[i]);
+                if (files[i].ContentType.StartsWith("image/"))
+                {
+                    var item = new ImageItem(files[i]);
+                    tempList.Add(item);
+                }
+            }
+
+            var anotherTempList = SettingsHelper.getStringOrDefault("sort", "System.FileName") switch
+            {
+                "System.FileName" => tempList.OrderBy(item => item.Name), // maybe not neccesary as images are already sorted by name?
+                "System.ItemDate" => tempList.OrderBy(item => item.DateTaken),
+                "System.Rating" => tempList.OrderByDescending(item => item.Rating),
+                _ => throw new ArgumentOutOfRangeException("unknown sorting key")
+            };
+
+
+            foreach (var f in folders)
+            {
+                var item = new ImageItem(f);
                 listItems.Add(item);
                 if (filter == 0)
                 {
@@ -284,16 +294,13 @@ namespace ImageRate
                 }
             }
 
-            for (int i = 0; i < files.Count; i++)
+            foreach(var item in anotherTempList)
             {
-                if (files[i].ContentType.StartsWith("image/"))
+                item.Index = listItems.Count; // set correct index here!
+                listItems.Add(item);
+                if (filter == 0 || item.Rating >= filter)
                 {
-                    var item = new ImageItem(files[i], listItems.Count);
-                    listItems.Add(item);
-                    if (filter == 0 || item.Rating >= filter)
-                    {
-                        listItemsFiltered.Add(item);
-                    }
+                    listItemsFiltered.Add(item);
                 }
             }
 

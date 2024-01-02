@@ -24,11 +24,11 @@ namespace ImageRate
         private BitmapImage cachedThumbnail;
         private bool isFolder;
 
-        public ImageItem(StorageFile file, int index)
+        public ImageItem(StorageFile file)
         {
             this.file = file;
             this.rating = -1;
-            this.index = index;
+            this.index = -1;
             this.isFolder = false;
         }
 
@@ -96,9 +96,28 @@ namespace ImageRate
             }
         }
 
+        public DateTimeOffset? DateTaken
+        {
+            get
+            {
+                if (isFolder) return null;
+
+                DateTimeOffset? dateTaken = null;
+
+                Task.Run(async () =>
+                {
+                    ImageProperties properties = await file.Properties.GetImagePropertiesAsync();
+                    dateTaken = properties.DateTaken;
+                }).Wait();
+
+                return dateTaken;
+            }
+        }
+
         public int Index
         {
             get { return index; }
+            set { index = value; }
         }
 
         public StorageFile File
