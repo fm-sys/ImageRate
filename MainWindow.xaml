@@ -20,6 +20,7 @@
 
         <FlyoutBase.AttachedFlyout>
             <MenuFlyout x:Name="ContextMenu">
+                <MenuFlyoutItem x:Name="ContextMenuItem_Refresh" Text="Refresh" Click="Flyout_Refresh"/>
                 <MenuFlyoutItem Text="Show in explorer" Click="Flyout_ShowInExplorer"/>
                 <MenuFlyoutItem Text="Open with..." Click="Flyout_OpenWith"/>
                 <MenuFlyoutSeparator/>
@@ -34,8 +35,27 @@
         <ProgressRing x:Name="ProgressIndicator" IsActive="False" />
         <TextBlock x:Name="Text_NothingToShow" Text="Nothing to show" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
-        <Image x:Name="ImageView" Margin="16,16,16,16" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
-        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" RightTapped="Image_RightTapped" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
+        <MediaPlayerElement x:Name="VideoView" AutoPlay="True" AreTransportControlsEnabled="False">
+            <MediaPlayerElement.TransportControls>
+                <MediaTransportControls 
+                    ShowAndHideAutomatically="False"
+                    IsFastForwardButtonVisible="False"
+                    IsStopButtonVisible="False"
+                    IsPlaybackRateButtonVisible="False"
+                    IsCompact="True"
+                    IsZoomButtonVisible="False"/>
+            </MediaPlayerElement.TransportControls>
+        </MediaPlayerElement>
+
+        <Rectangle x:Name="VideoPlaybackStartButtonBackground" Fill="#fafafa" Height="40" Width="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,16" Stroke="Transparent" RadiusY="0" RadiusX="0"/>
+
+        <HyperlinkButton x:Name="VideoPlaybackStartButton" Width="30" Height="30" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,21" Foreground="Black" Padding="4" ToolTipService.ToolTip="Set playback startpoint">
+            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE819;"/>
+        </HyperlinkButton>
+
+        <Image x:Name="ImageView" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
+        
+        <GridView x:Name="ImagesGridView" ItemsSource="{x:Bind listItemsFiltered}" IsItemClickEnabled="True" RightTapped="Image_RightTapped" ItemClick="ImagesGridView_ItemClick" ContainerContentChanging="ImageGridView_ContainerContentChanging" SelectionChanged="ImagesGridView_SelectionChanged" CanDragItems="True" SelectionMode="Extended" DragItemsStarting="ImagesGridView_DragItemsStarting" Padding="10,10,10,10" Margin="0,0,0,16">
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="local:ImageItem">
                     <RelativePanel Width="200" Height="200">
@@ -69,7 +89,7 @@
         <InfoBar x:Name="InfoNoMoreImages" Message="Keine weiteren Bilder." />
 
 
-        <RelativePanel Grid.Row="1">
+        <RelativePanel Grid.Row="1" Margin="0 16 0 0">
 
             <Button x:Name="PickFolderButton" Style="{StaticResource AccentButtonStyle}" Content="Open folder" Click="PickFolderButton_Click" Margin="16,0,0,0" RelativePanel.AlignLeftWithPanel="True"/>
 

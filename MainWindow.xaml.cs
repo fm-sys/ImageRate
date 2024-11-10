@@ -26,6 +26,9 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Storage.Search;
 using System.Linq;
 using System.IO;
+using Windows.Media.Core;
+using Windows.Media.Playback;
+using Windows.Media;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -64,6 +67,9 @@ namespace ImageRate
 
         FullscreenWindow fullscreenWindow;
 
+        public MediaPlayer mediaPlayer;
+
+        //public MediaTimelineController mediaTimelineController;
 
         public MainWindow()
         {
@@ -87,6 +93,13 @@ namespace ImageRate
             this.Closed += (s, a) => fullscreenWindow?.Close();
 
             GetAppWindowForCurrentWindow().Closing += OnClosing;
+
+
+            mediaPlayer = new MediaPlayer();
+            VideoView.SetMediaPlayer(mediaPlayer);
+
+            //mediaTimelineController = new MediaTimelineController();
+            
 
             foreach (RadioMenuFlyoutItem item in SortSubmenu.Items)
             {
@@ -176,14 +189,10 @@ namespace ImageRate
             }
             if (args.Key == VirtualKey.Escape)
             {
-                if (fullscreenWindow != null)
+                if (currentViewMode == ViewMode.SingleImage)
                 {
-                    fullscreenWindow.Close();
-                }
-            }
-            if (args.Key == VirtualKey.Escape)
-            {
-                if (fullscreenWindow != null)
+                    currentViewMode = ViewMode.List;
+                } else if (fullscreenWindow != null)
                 {
                     fullscreenWindow.Close();
                 }
@@ -268,7 +277,7 @@ namespace ImageRate
             var tempList = new List<ImageItem>();
             for (int i = 0; i < files.Count; i++)
             {
-                if (files[i].ContentType.StartsWith("image/"))
+                if (files[i].ContentType.StartsWith("image/") || files[i].ContentType.StartsWith("video/"))
                 {
                     var item = new ImageItem(files[i]);
                     tempList.Add(item);
@@ -321,7 +330,7 @@ namespace ImageRate
                 fullscreenWindow = new(this);
                 if (currentIndex >= 0)
                 {
-                    fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex].Path);
+                    fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex]);
                 }
                 fullscreenWindow.AppWindow.Move(this.AppWindow.Position);
                 fullscreenWindow.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
@@ -338,11 +347,18 @@ namespace ImageRate
             Button_Prev.Visibility = visibleSingleImage;
             Button_Next.Visibility = visibleSingleImage;
             ImageView.Visibility = visibleSingleImage;
+            VideoView.Visibility = visibleSingleImage;
             ProgressIndicator.Visibility = visibleSingleImage;
             Rating.Visibility = visibleSingleImage;
             InfoNoMoreImages.Visibility = visibleSingleImage;
 
             ImagesGridView.Visibility = visibleList;
+
+            var visibleVideoPlaybackStartButton = currentViewMode == ViewMode.SingleImage && currentIndex >= 0 && listItemsFiltered[currentIndex].File.ContentType.StartsWith("video/") ? Visibility.Visible : Visibility.Collapsed;
+
+            VideoPlaybackStartButton.Visibility = visibleVideoPlaybackStartButton;
+            VideoPlaybackStartButtonBackground.Visibility = visibleVideoPlaybackStartButton;
+            
         }
 
         private void Image_RightTapped(object sender, RightTappedRoutedEventArgs e)
@@ -350,9 +366,15 @@ namespace ImageRate
             var fromGrid = sender is GridView;
             foreach(var item in ContextMenu.Items)
             {
-                if (item != SortSubmenu) item.Visibility = fromGrid ? Visibility.Collapsed : Visibility.Visible;
+                if (item == ContextMenuItem_Refresh) item.Visibility = fromGrid ? Visibility.Visible : Visibility.Collapsed;
+                else if (item != SortSubmenu) item.Visibility = fromGrid ? Visibility.Collapsed : Visibility.Visible;
             }
             ContextMenu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
+
+        private void Flyout_Refresh(object sender, RoutedEventArgs e)
+        {
+            if (currentIndex >= 0) LoadImagePath(listItemsFiltered[currentIndex].Path);
         }
 
         private void Flyout_ShowInExplorer(object sender, RoutedEventArgs e) =>
@@ -470,10 +492,31 @@ namespace ImageRate
 
             if (fullscreenWindow != null)
             {
-                fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex].Path);
+                fullscreenWindow.SetCurrentImagePath(listItemsFiltered[currentIndex]);
             }
 
-            ImageView.Source = new BitmapImage(new Uri(listItemsFiltered[currentIndex].Path, UriKind.Absolute));
+            var itemPath = new Uri(listItemsFiltered[currentIndex].Path, UriKind.Absolute);
+
+            if (listItemsFiltered[currentIndex].File.ContentType.StartsWith("video/"))
+            {
+                VideoView.MediaPlayer.Source = MediaSource.CreateFromUri(itemPath);
+                VideoView.AreTransportControlsEnabled = true;
+
+                if (currentViewMode == ViewMode.SingleImage)
+                {
+                    VideoPlaybackStartButton.Visibility = Visibility.Visible;
+                    VideoPlaybackStartButtonBackground.Visibility = Visibility.Visible;
+                }
+                ImageView.Source = null;
+            } else
+            {
+                VideoView.MediaPlayer.Source = null;
+                VideoView.AreTransportControlsEnabled = false;
+                VideoPlaybackStartButton.Visibility = Visibility.Collapsed;
+                VideoPlaybackStartButtonBackground.Visibility = Visibility.Collapsed;
+                ImageView.Source = new BitmapImage(itemPath);
+            }
+
             Title = $"ImageRate - {listItemsFiltered[currentIndex].Name}";
 
             var rating = listItemsFiltered[currentIndex].Rating;
@@ -669,11 +712,11 @@ namespace ImageRate
             var shouldSwitch = lastClickedItem == item && (DateTime.Now - lastItemClick).TotalMilliseconds < 750;
             lastClickedItem = item;
 
-            if (!item.IsFolder)
+            /*if (!item.IsFolder)
             {
                 currentIndex = listItemsFiltered.IndexOf(item);
                 loadImg();
-            }
+            }*/ // moved to SelectionChanged callback
 
             if (shouldSwitch)
             {
@@ -742,6 +785,18 @@ namespace ImageRate
             var items = BreadcrumbBar.ItemsSource as String[];
             var folderPath = String.Join("\\", items, 0, args.Index + 1);
             await loadStorageFolder(await StorageFolder.GetFolderFromPathAsync(folderPath));
+        }
+
+        private void ImagesGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var item = ImagesGridView.SelectedItem as ImageItem;
+
+            if (!item.IsFolder)
+            {
+                var oldIndex = currentIndex;
+                currentIndex = listItemsFiltered.IndexOf(item);
+                if (oldIndex != currentIndex) loadImg();
+            }
         }
     }
 }

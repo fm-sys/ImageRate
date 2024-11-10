@@ -28,7 +28,7 @@
                 </MenuFlyoutItem>
             </MenuFlyout>
         </FlyoutBase.AttachedFlyout>
-        
+
         <Image x:Name="ImageView1" Opacity="0">
             <Image.OpacityTransition>
                 <ScalarTransition />
@@ -39,5 +39,8 @@
                 <ScalarTransition />
             </Image.OpacityTransition>
         </Image>
+
+        <MediaPlayerElement x:Name="VideoView" AutoPlay="False" AreTransportControlsEnabled="False" />
+
     </Grid>
 </Window>

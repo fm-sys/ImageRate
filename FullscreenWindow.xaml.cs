@@ -20,6 +20,14 @@ using System.Threading;
 using Windows.Storage;
 using AppUIBasics.ControlPages;
 using static System.Net.Mime.MediaTypeNames;
+using Windows.Media.Core;
+using Windows.Media.Playback;
+using Windows.Media;
+using Windows.UI.ViewManagement;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using Windows.Graphics.Display;
+using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -43,12 +51,56 @@ namespace ImageRate.Assets
 
             initMonitorFlyout();
 
-            Closed += (o,w) => autoplay_timer?.Dispose();
+            //ProjectionManager.
+            
+
+            VideoView.SetMediaPlayer(new MediaPlayer());
+            VideoView.MediaPlayer.Volume = 0;
+
+            fromWindow.mediaPlayer.PlaybackSession.PlaybackStateChanged += PlaybackSession_PlaybackStateChanged;
+            fromWindow.mediaPlayer.PlaybackSession.PositionChanged += PlaybackSession_PositionChanged;
+
+
+            Closed += (o,w) => { 
+                autoplay_timer?.Dispose();
+
+                fromWindow.mediaPlayer.PlaybackSession.PlaybackStateChanged -= PlaybackSession_PlaybackStateChanged;
+                fromWindow.mediaPlayer.PlaybackSession.PositionChanged -= PlaybackSession_PositionChanged;
+            };
 
         }
 
         private void initMonitorFlyout()
         {
+            var monitors = MonitorHelper.GetAllMonitorsInfo();
+
+            for (int i = 0; i < monitors.Count; i++)
+            {
+                var monitor = monitors[i];
+                var menuItem = new ToggleMenuFlyoutItem();
+                menuItem.Text = monitor.DeviceName;
+                MonitorSubmenu.Items.Add(menuItem);
+                menuItem.Click += (s, e) => {
+                    AppWindow.Move(new PointInt32(monitor.Monitor.Left, monitor.Monitor.Top));
+                    AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+                    foreach(var item in MonitorSubmenu.Items)
+                    {
+                        (item as ToggleMenuFlyoutItem).IsChecked = false;
+                    }
+                    menuItem.IsChecked = true;
+                };
+                if (i == monitors.Count - 1)
+                {
+                    menuItem.IsChecked = true;
+
+                    AppWindow.Move(new PointInt32(monitor.Monitor.Left, monitor.Monitor.Top));
+                    AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+                }
+            }
+            
+        }
+        /*{
+            
             var areas = DisplayArea.FindAll();
 
             for (int i = 0; i < areas.Count; i++)
@@ -63,7 +115,42 @@ namespace ImageRate.Assets
                     AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
                 };
             }
+
+            Screen.AllScreens
+
+        }*/
+
+        // Sync the playback state of mediaPlayer2 with mediaPlayer1
+        private void PlaybackSession_PlaybackStateChanged(MediaPlaybackSession sender, object args)
+        {
+            var dispatcherQueue = DispatcherQueue.TryEnqueue(() =>
+            {
+                switch (sender.PlaybackState)
+                {
+                    case MediaPlaybackState.Playing:
+                        VideoView.MediaPlayer.Play();
+                        break;
+                    case MediaPlaybackState.Paused:
+                        VideoView.MediaPlayer.Pause();
+                        break;
+                }
+            });
+            
         }
+
+        // Sync the playback position of mediaPlayer2 with mediaPlayer1
+        private void PlaybackSession_PositionChanged(MediaPlaybackSession sender, object args)
+        {
+            var dispatcherQueue = DispatcherQueue.TryEnqueue(() =>
+            {
+                if (VideoView.MediaPlayer != null &&
+                    Math.Abs((sender.Position - VideoView.MediaPlayer.PlaybackSession.Position).TotalMilliseconds) > 50)
+                {
+                    VideoView.MediaPlayer.PlaybackSession.Position = sender.Position;
+                }
+            });
+        }
+
 
         private void FullscreenWindow_KeyDown(object sender, KeyRoutedEventArgs args)
         {
@@ -85,16 +172,33 @@ namespace ImageRate.Assets
             }
         }
 
-        public void SetCurrentImagePath(String path)
+        public void SetCurrentImagePath(ImageItem item)
         {
-            var ToImageView = img_1_active ? ImageView2 : ImageView1;
-            var FromImageView = img_1_active ? ImageView1 : ImageView2; 
+            var itemPath = new Uri(item.Path, UriKind.Absolute);
 
-            img_1_active = !img_1_active;
+            if (item.File.ContentType.StartsWith("video/"))
+            {
+                VideoView.MediaPlayer.Source = MediaSource.CreateFromUri(itemPath);
+                VideoView.Opacity = 1;
+                ImageView1.Opacity = 0;             
+                ImageView2.Opacity = 0;
+            }
+            else
+            {
+                VideoView.Source = null;
+                VideoView.Opacity = 0;
 
-            ToImageView.Source = new BitmapImage(new Uri(path, UriKind.Absolute));
-            ToImageView.Opacity = 1;
-            FromImageView.Opacity = 0;
+                var ToImageView = img_1_active ? ImageView2 : ImageView1;
+                var FromImageView = img_1_active ? ImageView1 : ImageView2;
+
+                img_1_active = !img_1_active;
+
+                ToImageView.Source = new BitmapImage(itemPath);
+                ToImageView.Opacity = 1;
+                FromImageView.Opacity = 0;
+            }
+
+            
 
         }
 
@@ -148,7 +252,7 @@ namespace ImageRate.Assets
 
             while (await autoplay_timer.WaitForNextTickAsync())
             {
-                fromWindow.loadNextImg();
+                if (VideoView.MediaPlayer.PlaybackSession.PlaybackState != MediaPlaybackState.Playing) fromWindow.loadNextImg();
             }
         }
 
