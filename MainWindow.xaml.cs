@@ -29,6 +29,7 @@ using System.IO;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Media;
+using Windows.UI.ViewManagement;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -257,7 +258,7 @@ namespace ImageRate
             } else
             {
                 BreadcrumbBar.ItemsSource = folder.Path.Split('\\');
-                PickFolderButton.Style = null;
+                PickFolderButton.Style = (Style)Application.Current.Resources["DefaultButtonStyle"];
             }
             ImageView.Source = null;
             ProgressIndicator.IsActive = true;
@@ -501,6 +502,9 @@ namespace ImageRate
             {
                 VideoView.MediaPlayer.Source = MediaSource.CreateFromUri(itemPath);
                 VideoView.AreTransportControlsEnabled = true;
+                VideoView.MediaPlayer.PlaybackSession.Position = listItemsFiltered[currentIndex].StartTimestamp;
+
+                refreshPlaybackStartButtonStyle();
 
                 if (currentViewMode == ViewMode.SingleImage)
                 {
@@ -532,7 +536,7 @@ namespace ImageRate
 
         private async void RatingControl_ValueChanged(RatingControl sender, object args)
         {
-            if (ImageView.Source == null || currentIndex < 0)
+            if ((ImageView.Source == null && VideoView.MediaPlayer.Source == null) || currentIndex < 0)
             {
                 Rating.Value = -1;
                 return;
@@ -546,7 +550,7 @@ namespace ImageRate
 
             if (!success)
             {
-                RatingError.Title = listItemsFiltered[currentIndex].File.ContentType.StartsWith("image/jpeg") ? "Failed to store rating" : "As of now, only *.jpg's are supported for rating";
+                RatingError.Title = "Failed to store rating";
                 RatingError.IsOpen = true;
 
                 // reseting rating to last stored rating
@@ -790,6 +794,7 @@ namespace ImageRate
         private void ImagesGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var item = ImagesGridView.SelectedItem as ImageItem;
+            if (item == null) return;
 
             if (!item.IsFolder)
             {
@@ -797,6 +802,38 @@ namespace ImageRate
                 currentIndex = listItemsFiltered.IndexOf(item);
                 if (oldIndex != currentIndex) loadImg();
             }
+        }
+
+        private void refreshPlaybackStartButtonStyle()
+        {
+            VideoPlaybackStartButton.Style = listItemsFiltered[currentIndex].StartTimestamp == TimeSpan.Zero ? (Style)Application.Current.Resources["DefaultButtonStyle"] : (Style)Application.Current.Resources["AccentButtonStyle"];
+        }
+
+        private async void VideoPlaybackStartSelector_Opening(object sender, object e)
+        {
+            if (listItemsFiltered[currentIndex].StartTimestamp == TimeSpan.Zero)
+            {
+                VideoPlaybackStartSelector.Hide();
+                await listItemsFiltered[currentIndex].updateStartTimestamp(VideoView.MediaPlayer.PlaybackSession.Position);
+                refreshPlaybackStartButtonStyle();
+            }
+        }
+
+        private void VideoPlaybackStartSelector_Jump_Click(object sender, RoutedEventArgs e)
+        {
+            VideoView.MediaPlayer.Pause();
+            VideoView.MediaPlayer.PlaybackSession.Position = listItemsFiltered[currentIndex].StartTimestamp;
+        }
+
+        private async void VideoPlaybackStartSelector_Delete_Click(object sender, RoutedEventArgs e)
+        {
+            await listItemsFiltered[currentIndex].updateStartTimestamp(TimeSpan.Zero);
+            refreshPlaybackStartButtonStyle();
+        }
+
+        private async void VideoPlaybackStartSelector_Set_Click(object sender, RoutedEventArgs e)
+        {
+            await listItemsFiltered[currentIndex].updateStartTimestamp(VideoView.MediaPlayer.PlaybackSession.Position);
         }
     }
 }

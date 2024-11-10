@@ -47,11 +47,19 @@
             </MediaPlayerElement.TransportControls>
         </MediaPlayerElement>
 
-        <Rectangle x:Name="VideoPlaybackStartButtonBackground" Fill="#fafafa" Height="40" Width="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,16" Stroke="Transparent" RadiusY="0" RadiusX="0"/>
+        <Rectangle x:Name="VideoPlaybackStartButtonBackground" Fill="{ThemeResource AcrylicBackgroundFillColorBaseBrush}" Height="40" Width="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,16" Stroke="Transparent" RadiusY="4" RadiusX="4"/>
 
-        <HyperlinkButton x:Name="VideoPlaybackStartButton" Width="30" Height="30" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,21" Foreground="Black" Padding="4" ToolTipService.ToolTip="Set playback startpoint">
+        <Button x:Name="VideoPlaybackStartButton" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="670,0,0,16" Padding="4" ToolTipService.ToolTip="Set playback startpoint">
             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE819;"/>
-        </HyperlinkButton>
+            <Button.Flyout>
+                <MenuFlyout x:Name="VideoPlaybackStartSelector" Opening="VideoPlaybackStartSelector_Opening">
+                    <MenuFlyoutItem x:Name="VideoPlaybackStartSelector_Jump" Text="Jump to startpoint" Click="VideoPlaybackStartSelector_Jump_Click" Icon="Previous"/>
+                    <MenuFlyoutItem x:Name="VideoPlaybackStartSelector_Delete" Text="Delete" Click="VideoPlaybackStartSelector_Delete_Click" Icon="Delete"/>
+                    <MenuFlyoutItem x:Name="VideoPlaybackStartSelector_Set" Text="Set new playback start" Click="VideoPlaybackStartSelector_Set_Click" Icon="Pin"/>
+                </MenuFlyout>
+            </Button.Flyout>
+
+        </Button>
 
         <Image x:Name="ImageView" RightTapped="Image_RightTapped" CanDrag="True" DragStarting="ImageView_DragStarting" />
         
