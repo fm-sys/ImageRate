@@ -6,11 +6,11 @@
 "ImageRate" is a user-friendly Windows app designed for rating and organizing pictures. With its simple and intuitive interface, users can easily assign rating stars to their images, helping them categorize and prioritize their photo collection. This small yet effective tool is perfect for individuals who want to manage and curate their photos with ease.
 
 ## Download
-<center>
+<p align="center">
 	<a href="https://apps.microsoft.com/detail/ImageRate/9NZ1B660K8MC?launch=true&mode=mini">
 		<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>
 	</a>
-</center>
+</p>
 
 
 ## Usage hints
