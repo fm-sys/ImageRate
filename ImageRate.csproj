@@ -20,7 +20,7 @@
     <AppxBundle>Never</AppxBundle>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
-    <PackageCertificateKeyFile>ImageRate_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>BC5EBAD234EC455370F8F4E02BF1D7C701074729</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <Content Remove="Assets\FullscreenWindow.xaml" />

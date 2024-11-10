@@ -5,6 +5,14 @@
 
 "ImageRate" is a user-friendly Windows app designed for rating and organizing pictures. With its simple and intuitive interface, users can easily assign rating stars to their images, helping them categorize and prioritize their photo collection. This small yet effective tool is perfect for individuals who want to manage and curate their photos with ease.
 
+## Download
+<center>
+	<a href="https://apps.microsoft.com/detail/ImageRate/9NZ1B660K8MC?launch=true&mode=mini">
+		<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>
+	</a>
+</center>
+
+
 ## Usage hints
 
 When using this program, it will add "rating" metadata tags to your images. To access the rating via the windows file explorer, just can just group or sort the folder by rating.
@@ -32,9 +40,10 @@ To make working with app even more efficient, we added several keyboard shortcut
 
 If you miss any specific feature, feel free to ask in the [issue tracker](https://github.com/fm-sys/ImageRate/issues) and we’ll see what we can do…
 
-## Download
+## Development notes
 
-<a href="https://apps.microsoft.com/detail/ImageRate/9NZ1B660K8MC?launch=true
-	&mode=mini">
-	<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>
-</a>
+The project is written in C# using the WinUI 3 framework. It is built with Visual Studio 2022.
+
+To release a new version, build the solution in the `Release` configuration via `Project > Publish > Create App Packages`. You can set the new version code in the `Create App Packages` wizard. Then upload the resulting `.appx` package.
+
+A selfsigned certificate is currently used for signing the app, which needs to be renewed every year. This can be done via the `Package.appxmanifest` project explorer unter the section `Packaging`. 
