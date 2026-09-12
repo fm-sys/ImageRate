@@ -15,7 +15,7 @@
 
 ## Usage hints
 
-When using this program, it will add "rating" metadata tags to your images. To access the rating via the windows file explorer, just can just group or sort the folder by rating.
+When using this program, it will add "rating" metadata tags to your images. To access the rating via the windows file explorer, you can just group or sort the folder by rating.
 
 I'm personally using this program to rate images, and I've found a workflow that works quite well for me. To start off, every image begins with zero stars by default. I go through them once, giving each one at least the first star if it's not completely bad. Then, I revisit the images, adding a star to the ones I like, and I gradually raise my standards with each round. I keep repeating this process until I've narrowed down the number of images to a manageable size. It's a pretty effective method, and I'd recommend giving it a try!
 
